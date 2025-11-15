@@ -3,21 +3,21 @@ AI 配置和初始化模块
 負責處理 AnythingLLM 的配置、環境變數和 HTTP 客戶端初始化
 """
 
-import os
 import httpx
 from typing import Optional
+from utility.config import env
 
 class AIConfig:
     """AI配置管理類"""
     
     def __init__(self):
-        # AnythingLLM API 配置
-        self.base_url = os.getenv("ANYTHINGLLM_BASE_URL", "http://localhost:3001")
-        self.api_key = os.getenv("ANYTHINGLLM_API_KEY", "PNB2B7R-4EC4P21-NM0XHTX-4BHZBHJ")
-        self.workspace_slug = os.getenv("ANYTHINGLLM_WORKSPACE_SLUG", "syncai")
+        # AnythingLLM API 配置 - 從統一配置讀取
+        self.base_url = env.ANYTHINGLLM_BASE_URL
+        self.api_key = env.ANYTHINGLLM_API_KEY
+        self.workspace_slug = env.ANYTHINGLLM_WORKSPACE_SLUG
         
         # 調試配置
-        self.debug_thinking = os.getenv("ANYTHINGLLM_DEBUG_THINKING", "false").lower() == "true"
+        self.debug_thinking = env.ANYTHINGLLM_DEBUG_THINKING
         
         # HTTP 客戶端配置
         self._httpx_client: Optional[httpx.AsyncClient] = None

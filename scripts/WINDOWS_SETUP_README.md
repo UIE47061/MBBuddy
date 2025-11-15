@@ -1,6 +1,6 @@
-# SyncAI Windows 安裝與控制腳本
+# MBBuddy Windows 安裝與控制腳本
 
-本目錄包含 SyncAI 在 Windows 環境下的安裝、啟動和控制腳本，讓您快速部署和管理 SyncAI 服務。
+本目錄包含 MBBuddy 在 Windows 環境下的安裝、啟動和控制腳本,讓您快速部署和管理 MBBuddy 服務。
 
 ## 🚀 快速開始
 
@@ -23,8 +23,8 @@
 # 安裝 Docker Desktop
 install_docker.bat
 
-# 完整 SyncAI 安裝
-install_syncai.bat
+# 完整 MBBuddy 安裝
+install_mbbuddy.bat
 ```
 
 ### 開發環境設置

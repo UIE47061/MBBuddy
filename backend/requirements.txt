@@ -1,0 +1,12 @@
+# 檢查套件工具：pip install pip-check-reqs
+# 檢查未使用的依賴：pip-extra-reqs .
+# 檢查缺少的套件：pip-missing-reqs .
+fastapi
+uvicorn
+pydantic
+httpx
+reportlab
+python-dotenv
+# Local LLM dependencies
+llama-cpp-python>=0.2.0
+huggingface-hub>=0.19.0

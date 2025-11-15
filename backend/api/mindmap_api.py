@@ -246,9 +246,9 @@ async def generate_mindmap():
     try:
         # 在Docker環境中尋找AIresult.txt檔案
         possible_paths = [
-            "frontend/syncai-frontend/public/AIresult.txt",
-            "/app/frontend/syncai-frontend/public/AIresult.txt",
-            "../frontend/syncai-frontend/public/AIresult.txt"
+            "frontend/public/AIresult.txt",
+            "/app/frontend/public/AIresult.txt",
+            "../frontend/public/AIresult.txt"
         ]
         
         file_path = None

@@ -67,7 +67,7 @@ class AIClient:
             raise HTTPException(status_code=500, detail="未配置 AnythingLLM API Key")
         
         # 生成工作區slug（使用討論室代碼，確保唯一性）
-        workspace_slug = f"syncai-{room_code.lower()}"
+        workspace_slug = f"MBBuddy-{room_code.lower()}"
         
         try:
             # 1. 檢查工作區是否已存在（通過列出所有工作區）
@@ -93,7 +93,7 @@ class AIClient:
             # 2. 如果不存在，創建新工作區
             print(f"工作區 '{workspace_slug}' 不存在，開始創建...")
             create_payload = {
-                "name": f"SyncAI-{room_title}"
+                "name": f"MBBuddy-{room_title}"
             }
             
             create_response = await self.config.httpx_client.post(
@@ -160,22 +160,6 @@ class AIClient:
         except Exception as e:
             print(f"獲取workspace信息失敗: {e}")
             return None
-    
-    async def test_connection(self) -> bool:
-        """
-        測試 AnythingLLM 連接
-        
-        Returns:
-            連接是否成功
-        """
-        try:
-            response = await self.config.httpx_client.get(
-                self.config.get_workspaces_url(),
-                headers=self.config.headers
-            )
-            return response.status_code == 200
-        except Exception:
-            return False
     
     async def call_chat_api(self, message: str, workspace_slug: str = None, mode: str = "chat") -> str:
         """

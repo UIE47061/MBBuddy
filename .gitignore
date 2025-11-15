@@ -1,39 +1,6 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.pyc
-*.env
-.env
-.venv
-venv/
-ENV/
-env/
-*.egg-info/
-dist/
-build/
-.eggs/
-pip-wheel-metadata/
-test_dual_fusion.py
-dual_fusion_test_results.json
-
-# ai_models
-ai_models/*.gguf
-!download_model.sh
-!download_model.bat
-
 # VSCode
 .vscode/
 .history/
-
-# Node (for前端)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-package-lock.json
 
 # OS
 .DS_Store
@@ -49,7 +16,7 @@ desktop.ini
 *.bak
 
 # Local env
-.env.*
+.env
 !.env.example
 
 # Coverage
@@ -63,9 +30,7 @@ coverage.xml
 # Jupyter
 .ipynb_checkpoints/
 
-# Frontend
-
 #agent
-CLAUDE.md
-ai_models/*
-!ai_models/.gitkeep
+CLAUDE*.md
+
+/icon.png

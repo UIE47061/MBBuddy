@@ -36,8 +36,8 @@
 ### 1. Download Project
 
 ```bash
-git clone https://github.com/UIE47061/SyncAI.git
-cd SyncAI
+git clone https://github.com/UIE47061/MBBuddy.git
+cd MBBuddy
 ```
 
 ### 2. Installation Method (One-Click Install)
@@ -53,7 +53,7 @@ scripts\0_one_click_install_TW.bat
 - Automatically check and install Docker Desktop
 - Guide download and setup of AnythingLLM
 - Obtain API keys and configure environment variables
-- One-click deployment of SyncAI production environment
+- One-click deployment of MBBuddy production environment
 - Display access addresses and control commands upon completion
 
 
@@ -126,65 +126,60 @@ If using Snapdragon X series laptops, NPU acceleration can be enabled:
 
 ## 📂 Directory Structure
 ```
-SyncAI/
-├── 📁 ai_models/                    # AI model files directory
-│   └── .gitkeep                     # Git keep file (model files need to be downloaded)
-│
-├── 🚀 backend/                      # FastAPI backend service
+MBBuddy/
+├── 📁 backend/                      # FastAPI backend service
 │   ├── main.py                      # Backend main entry point
+│   ├── requirements.txt             # Python dependencies
 │   └── api/                         # API modules
 │       ├── __init__.py              # Package initialization
 │       ├── ai_api.py                # AI-related APIs (model inference, summary)
 │       ├── ai_client.py             # AI client
 │       ├── ai_config.py             # AI configuration settings
 │       ├── ai_prompts.py            # AI prompt templates
+│       ├── hostStyle_api.py         # Host style API
 │       ├── local_llm_client.py      # Local LLM client
 │       ├── mindmap_api.py           # Mind map API
 │       ├── network_api.py           # Network-related APIs
 │       ├── participants_api.py      # Discussion participation APIs (user management, voting)
+│       ├── pdf_generate.py          # PDF generation
 │       ├── snapdragon_config.py     # Snapdragon NPU configuration
-│       ├── transparent_fusion.py    # Transparent fusion functionality
-│       └── utility.py               # Utility functions (PDF generation, etc.)
+│       └── transparent_fusion.py    # Transparent fusion functionality
 │
 ├── 🎨 frontend/                     # Frontend application
-│   └── syncai-frontend/             # Vue3 + Vite frontend project
-│       ├── index.html               # Main HTML template
-│       ├── package.json             # Frontend dependency configuration
-│       ├── vite.config.js           # Vite build configuration
-│       ├── public/                  # Static resources
-│       │   ├── AIresult.txt         # AI result example
-│       │   ├── favicon.ico          # Website icon
-│       │   ├── icon.png             # Application icon
-│       │   └── logo.png             # Logo image
-│       └── src/                     # Source code directory
-│           ├── App.vue              # Root component
-│           ├── main.js              # Application entry point
-│           ├── assets/              # Style resources
-│           │   ├── base.css         # Base styles
-│           │   ├── main.css         # Main styles
-│           │   └── styles.css       # Custom styles
-│           ├── components/          # Vue components
-│           │   ├── ControlPanel.vue       # Control panel
-│           │   ├── CreateRoomModal.vue    # Create room modal
-│           │   ├── Home.vue               # Home component
-│           │   ├── HostPanel.vue          # Host panel
-│           │   ├── JoinRoomModal.vue      # Join room modal
-│           │   ├── MindMapModal.vue       # Mind map modal
-│           │   ├── NicknameModals.vue     # Nickname setting modal
-│           │   ├── NotificationToast.vue  # Notification message
-│           │   ├── ParticipantPanel.vue   # Participant panel
-│           │   ├── QRCodeModal.vue        # QR Code modal
-│           │   ├── QuestionsList.vue      # Questions list
-│           │   ├── ScoreJudgePanel.vue    # Scoring panel
-│           │   ├── TimerModal.vue         # Timer modal
-│           │   ├── TopicEditModal.vue     # Topic edit modal
-│           │   └── TopicsSidebar.vue      # Topic sidebar
-│           ├── composables/         # Vue Composition API
-│           │   └── useRoom.js       # Discussion room logic
-│           ├── router/              # Route configuration
-│           │   └── index.js         # Route definitions
-│           └── utils/               # Utility functions
-│               └── api.js           # API request wrapper
+│   ├── index.html               # Main HTML template
+│   ├── package.json             # Frontend dependency configuration
+│   ├── vite.config.js           # Vite build configuration
+│   ├── public/                  # Static resources
+│   │   └── AIresult.txt         # AI result example
+│   └── src/                     # Source code directory
+│       ├── App.vue              # Root component
+│       ├── main.js              # Application entry point
+│       ├── assets/              # Style resources
+│       │   ├── base.css         # Base styles
+│       │   ├── main.css         # Main styles
+│       │   └── styles.css       # Custom styles
+│       ├── components/          # Vue components
+│       │   ├── ControlPanel.vue       # Control panel
+│       │   ├── CreateRoomModal.vue    # Create room modal
+│       │   ├── Home.vue               # Home component
+│       │   ├── HostPanel.vue          # Host panel
+│       │   ├── JoinRoomModal.vue      # Join room modal
+│       │   ├── MindMapModal.vue       # Mind map modal
+│       │   ├── NicknameModals.vue     # Nickname setting modal
+│       │   ├── NotificationToast.vue  # Notification message
+│       │   ├── ParticipantPanel.vue   # Participant panel
+│       │   ├── QRCodeModal.vue        # QR Code modal
+│       │   ├── QuestionsList.vue      # Questions list
+│       │   ├── ScoreJudgePanel.vue    # Scoring panel
+│       │   ├── TimerModal.vue         # Timer modal
+│       │   ├── TopicEditModal.vue     # Topic edit modal
+│       │   └── TopicsSidebar.vue      # Topic sidebar
+│       ├── composables/         # Vue Composition API
+│       │   └── useRoom.js       # Discussion room logic
+│       ├── router/              # Route configuration
+│       │   └── index.js         # Route definitions
+│       └── utils/               # Utility functions
+│           └── api.js           # API request wrapper
 │
 ├── 🐳 docker/                       # Docker deployment configuration
 │   ├── README.md                    # Docker usage instructions
@@ -208,7 +203,6 @@ SyncAI/
 
 | File/Directory | Function Description |
 |-----------|----------|
-| `ai_models/` | Store AI model files, model files need to be manually downloaded |
 | `backend/api/ai_api.py` | Core AI functionality, including text generation and discussion summaries |
 | `backend/api/ai_client.py` | AI client, handling AI model loading and inference |
 | `backend/api/participants_api.py` | Discussion participation logic, user management and voting system |
@@ -220,7 +214,6 @@ SyncAI/
 | `docker/` | Containerized deployment configuration, supporting development and production environments |
 | `scripts/` | Automation scripts directory, including installation, deployment, and development environment management |
 | `scripts/0_one_click_install_TW.bat` | Windows one-click installation script, automated complete installation process |
-| `scripts/download_model.*` | Convenient scripts for automatically downloading AI models |
 
 ## 🛡️ Privacy Protection
 

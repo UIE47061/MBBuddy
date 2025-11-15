@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI 一鍵安裝腳本
+REM MBBuddy 一鍵安裝腳本
 REM 此腳本將自動完成以下步驟：
 REM 1. 安裝 Docker Desktop
 REM 2. 引導用戶下載並設置 AnythingLLM
@@ -13,17 +13,17 @@ setlocal enabledelayedexpansion
 
 echo.
 echo ==========================================
-echo     SyncAI 一鍵安裝腳本 v1.0
+echo     MBBuddy 一鍵安裝腳本 v1.0
 echo ==========================================
 echo.
-echo 此腳本將引導您完成完整的 SyncAI 安裝和設置
+echo 此腳本將引導您完成完整的 MBBuddy 安裝和設置
 echo.
 echo 安裝步驟：
 echo   1. 檢查並安裝 Docker Desktop
 echo   2. 引導下載和設置 AnythingLLM
 echo   3. 獲取 API 金鑰
 echo   4. 配置環境變數
-echo   5. 部署 SyncAI 服務
+echo   5. 部署 MBBuddy 服務
 echo   6. 完成設置
 echo.
 pause
@@ -44,18 +44,18 @@ if not exist "docker\docker-compose.yml" goto :error_dir
 echo [SUCCESS] 專案目錄確認完成
 echo.
 
-REM 快速檢查是否已有運行的 SyncAI 服務
-echo [INFO] 檢查現有 SyncAI 服務...
-docker ps --filter "name=syncai" --format "table {{.Names}}\t{{.Status}}" 2>nul | findstr "syncai" >nul 2>&1
+REM 快速檢查是否已有運行的 MBBuddy 服務
+echo [INFO] 檢查現有 MBBuddy 服務...
+docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}" 2>nul | findstr "mbbuddy" >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [INFO] 發現正在運行的 SyncAI 服務：
-    docker ps --filter "name=syncai" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+    echo [INFO] 發現正在運行的 MBBuddy 服務：
+    docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
     echo.
-    set /p skip_setup="檢測到 SyncAI 已在運行，是否跳過安裝直接顯示訪問資訊? (y/n): "
+    set /p skip_setup="檢測到 MBBuddy 已在運行，是否跳過安裝直接顯示訪問資訊? (y/n): "
     if /i "!skip_setup!"=="Y" (
         goto :show_access_info
     )
-    echo [INFO] 將重新安裝和配置 SyncAI...
+    echo [INFO] 將重新安裝和配置 MBBuddy...
     echo [INFO] 停止現有服務...
     docker-compose -f docker\docker-compose.yml down >nul 2>&1
     echo.
@@ -164,7 +164,7 @@ echo ==========================================
 echo 步驟 2/6: AnythingLLM 下載和設置
 echo ==========================================
 echo.
-echo AnythingLLM 是 SyncAI 的核心 AI 引擎，需要單獨下載和設置
+echo AnythingLLM 是 MBBuddy 的核心 AI 引擎，需要單獨下載和設置
 echo.
 echo [重要] 請按照以下步驟操作：
 echo.
@@ -291,13 +291,13 @@ REM 更新配置檔案...
 REM 創建 .env 檔案
 echo [INFO] 創建環境變數檔案 (.env)...
 (
-echo # SyncAI 環境變數配置
+echo # MBBuddy 環境變數配置
 echo # 此檔案由一鍵安裝腳本自動生成
 echo.
 echo # AnythingLLM 配置
 echo ANYTHINGLLM_BASE_URL=http://host.docker.internal:3001
 echo ANYTHINGLLM_API_KEY=!api_key!
-echo ANYTHINGLLM_WORKSPACE_SLUG=syncai
+echo ANYTHINGLLM_WORKSPACE_SLUG=MBBuddy
 echo ANYTHINGLLM_DEBUG_THINKING=false
 echo.
 echo # 服務配置
@@ -319,14 +319,14 @@ REM =====================================
 REM 步驟 5: 部署正式環境
 REM =====================================
 echo ==========================================
-echo 步驟 5/6: 部署 SyncAI 正式環境
+echo 步驟 5/6: 部署 MBBuddy 正式環境
 echo ==========================================
 echo.
 
 echo [INFO] 正在停止現有容器 (如果有的話)...
 docker-compose -f docker\docker-compose.yml down >nul 2>&1
 
-echo [INFO] 構建並啟動 SyncAI 服務...
+echo [INFO] 構建並啟動 MBBuddy 服務...
 echo 這可能需要幾分鐘時間，請耐心等待...
 echo.
 
@@ -335,7 +335,7 @@ set ANYTHINGLLM_API_KEY=!api_key!
 
 docker-compose -f docker\docker-compose.yml up -d --build
 if %errorlevel% neq 0 (
-    echo [ERROR] SyncAI 服務部署失敗
+    echo [ERROR] MBBuddy 服務部署失敗
     echo.
     echo 可能的解決方案：
     echo 1. 檢查 Docker Desktop 是否正常運行
@@ -347,7 +347,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [SUCCESS] SyncAI 服務部署完成！
+echo [SUCCESS] MBBuddy 服務部署完成！
 echo.
 
 REM 等待服務啟動
@@ -365,7 +365,7 @@ echo.
 
 REM 檢查容器狀態
 echo [容器狀態]
-docker ps --filter "name=syncai" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+docker ps --filter "name=MBBuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
 if %errorlevel% neq 0 (
     echo 無法檢查容器狀態，請確認 Docker 服務正常運行
 )
@@ -412,7 +412,7 @@ echo   查看狀態: docker-compose -f docker\docker-compose.yml ps
 echo.
 
 echo [使用說明]
-echo 1. 在瀏覽器中打開前端地址開始使用 SyncAI
+echo 1. 在瀏覽器中打開前端地址開始使用 MBBuddy
 echo 2. 確保 AnythingLLM 保持運行狀態
 echo 3. 如需停止服務，使用上述停止指令
 echo 4. 重新啟動電腦後，可能需要手動啟動 Docker Desktop 和 AnythingLLM
@@ -425,17 +425,17 @@ echo - 技術支援請查看專案文檔
 echo.
 
 REM 提供快捷操作
-set /p open_browser="是否現在打開 SyncAI 前端? (y/n): "
+set /p open_browser="是否現在打開 MBBuddy 前端? (y/n): "
 if /i "!open_browser!"=="Y" (
     start http://localhost
 )
 
 echo.
 echo ==========================================
-echo        SyncAI 一鍵安裝完成！ 🚀
+echo        MBBuddy 一鍵安裝完成！ 🚀
 echo ==========================================
 echo.
-echo 感謝使用 SyncAI！
+echo 感謝使用 MBBuddy！
 echo.
 pause
 
@@ -446,7 +446,7 @@ REM 錯誤處理
 REM =====================================
 :error_dir
 echo [ERROR] 無法找到專案目錄結構
-echo 請確保您在 SyncAI 專案根目錄中執行此腳本
+echo 請確保您在 MBBuddy 專案根目錄中執行此腳本
 echo.
 echo 預期的目錄結構：
 echo - package.json

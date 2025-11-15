@@ -43,7 +43,7 @@ if not exist ".venv" (
 REM Activate virtual environment and install dependencies
 echo   Installing backend dependencies...
 call .venv\Scripts\activate.bat
-pip install -r requirement.txt
+pip install -r backend\requirements.txt
 
 echo [INFO] Setting up frontend environment...
 
@@ -56,10 +56,10 @@ if %errorlevel% neq 0 (
 )
 
 REM Install frontend dependencies
-cd frontend\syncai-frontend
+cd frontend
 echo   Installing frontend dependencies...
 npm install
-cd ..\..
+cd ..
 
 echo.
 echo [SUCCESS] Environment setup completed!

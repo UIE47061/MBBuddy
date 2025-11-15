@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.env
+.env
+.venv
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+test_dual_fusion.py
+dual_fusion_test_results.json
+
+# ai_models
+ai_models/*
+!ai_models/.gitkeep

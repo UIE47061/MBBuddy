@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI Control Panel for Windows
+REM MBBuddy Control Panel for Windows
 
 setlocal enabledelayedexpansion
 
@@ -15,7 +15,7 @@ cd /d "%PROJECT_ROOT%"
 cls
 echo.
 echo =====================================
-echo      SyncAI Meeting Room Control
+echo      MBBuddy Meeting Room Control
 echo =====================================
 echo.
 echo Please select an operation:
@@ -47,7 +47,7 @@ goto :invalid_choice
 
 :start_service
 echo.
-echo [INFO] Starting SyncAI meeting room services...
+echo [INFO] Starting MBBuddy meeting room services...
 docker-compose -f docker/docker-compose.yml up -d
 if %errorlevel% equ 0 (
     echo [SUCCESS] Services started successfully!
@@ -66,7 +66,7 @@ goto :menu
 
 :stop_service
 echo.
-echo [INFO] Stopping SyncAI meeting room services...
+echo [INFO] Stopping MBBuddy meeting room services...
 docker-compose -f docker/docker-compose.yml down
 if %errorlevel% equ 0 (
     echo [SUCCESS] Services stopped
@@ -79,7 +79,7 @@ goto :menu
 
 :restart_service
 echo.
-echo [INFO] Restarting SyncAI meeting room services...
+echo [INFO] Restarting MBBuddy meeting room services...
 docker-compose -f docker/docker-compose.yml restart
 if %errorlevel% equ 0 (
     echo [SUCCESS] Services restarted successfully!
@@ -98,7 +98,7 @@ goto :menu
 
 :status_service
 echo.
-echo [INFO] SyncAI meeting room service status:
+echo [INFO] MBBuddy meeting room service status:
 echo.
 docker-compose -f docker/docker-compose.yml ps
 echo.
@@ -107,7 +107,7 @@ goto :menu
 
 :logs_service
 echo.
-echo [INFO] SyncAI meeting room service logs (Press Ctrl+C to exit):
+echo [INFO] MBBuddy meeting room service logs (Press Ctrl+C to exit):
 echo.
 docker-compose -f docker/docker-compose.yml logs -f
 goto :menu
@@ -122,7 +122,7 @@ echo.
 REM Check if services are running
 docker-compose -f docker/docker-compose.yml ps | findstr "Up" >nul
 if %errorlevel% neq 0 (
-    echo [WARNING] SyncAI services are not currently running!
+    echo [WARNING] MBBuddy services are not currently running!
     echo Please start the services first (Option 1)
     echo.
 )
@@ -179,6 +179,6 @@ goto :menu
 
 :exit
 echo.
-echo Thank you for using SyncAI Control Panel!
+echo Thank you for using MBBuddy Control Panel!
 echo.
 exit /b 0

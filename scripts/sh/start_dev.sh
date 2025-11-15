@@ -26,13 +26,6 @@ if [ ! -d ".venv" ]; then
     exit 1
 fi
 
-# 檢查模型檔案是否存在
-if [ ! -f "ai_models/mistral-7b-instruct-v0.2.Q5_K_M.gguf" ]; then
-    echo "❌ 錯誤：找不到 AI 模型檔案"
-    echo "請先執行：./download_model.sh"
-    exit 1
-fi
-
 echo "📡 啟動後端服務..."
 # 在背景啟動後端服務
 source .venv/bin/activate
@@ -43,13 +36,13 @@ echo "  後端服務已啟動 (PID: $BACKEND_PID)"
 
 echo "🎨 啟動前端服務..."
 # 在背景啟動前端服務
-cd frontend/syncai-frontend
-nohup npm run dev -- --host > ../../frontend.log 2>&1 &
+cd frontend
+nohup npm run dev -- --host > ../frontend.log 2>&1 &
 FRONTEND_PID=$!
-echo $FRONTEND_PID > ../../frontend.pid
-echo "  前端服務已啟動 (PID: $FRONTEND_PID)"
+echo $FRONTEND_PID > ../frontend.pid
+echo " 前端服務已啟動 (PID: $FRONTEND_PID)"
 
-cd ../..
+cd ..
 
 # 等待服務啟動
 echo "⏳ 等待服務啟動..."
@@ -79,5 +72,5 @@ echo "   後端日誌：tail -f backend.log"
 echo "   前端日誌：tail -f frontend.log"
 echo ""
 echo "🛑 停止服務："
-echo "   ./stop_dev.sh"
+echo "   ./scripts/stop_dev.sh"
 echo ""

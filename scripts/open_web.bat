@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI Web Interface Launcher
+REM MBBuddy Web Interface Launcher
 REM This script allows users to select IP and open web interface
 
 setlocal enabledelayedexpansion
@@ -14,14 +14,14 @@ cd /d "%PROJECT_ROOT%"
 
 echo.
 echo =====================================
-echo      SyncAI Web Interface Launcher
+echo      MBBuddy Web Interface Launcher
 echo =====================================
 echo.
 
 REM Check if services are running
 docker-compose -f docker/docker-compose.yml ps | findstr "Up" >nul
 if %errorlevel% neq 0 (
-    echo [WARNING] SyncAI services are not running!
+    echo [WARNING] MBBuddy services are not running!
     echo.
     echo Would you like to start them first? (Y/N)
     set /p start_choice="Enter your choice: "
@@ -175,7 +175,7 @@ echo.
 echo   Frontend: http://!selected_ip!
 echo   Backend:  http://!selected_ip!:8000
 echo.
-echo Copy these URLs to access SyncAI from any browser.
+echo Copy these URLs to access MBBuddy from any browser.
 echo You can share these URLs with others on the same network!
 echo.
 pause

@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI Quick Setup Script for Windows (For existing project)
-REM Use this script when you already have the SyncAI project
+REM MBBuddy Quick Setup Script for Windows (For existing project)
+REM Use this script when you already have the MBBuddy project
 
 setlocal enabledelayedexpansion
 
 echo.
 echo =====================================
-echo      SyncAI Quick Deployment
+echo      MBBuddy Quick Deployment
 echo =====================================
 echo.
 echo This script is for existing project directories
@@ -136,6 +136,6 @@ exit /b 0
 
 :error_dir
 echo [ERROR] Cannot find project directory structure
-echo Please ensure you are running this script in the SyncAI project root directory
+echo Please ensure you are running this script in the MBBuddy project root directory
 pause
 exit /b 1

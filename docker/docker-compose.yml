@@ -3,39 +3,37 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
-    image: syncai/backend:latest
-    container_name: syncai-backend
+    image: mbbuddy/backend:latest
+    container_name: mbbuddy-backend
     ports:
       - "0.0.0.0:8000:8000"
     env_file:
-      - ../.env
+      - ../.env  # 從 .env 檔案讀取所有變數
     environment:
       - PYTHONPATH=/app
-      # AnythingLLM 配置 - 從容器內訪問主機服務
+      # 覆蓋 .env 中的 URL,使用容器訪問主機的特殊地址
       - ANYTHINGLLM_BASE_URL=http://host.docker.internal:3001
-      - ANYTHINGLLM_API_KEY=${ANYTHINGLLM_API_KEY}
-      - ANYTHINGLLM_WORKSPACE_SLUG=syncai
-      - ANYTHINGLLM_DEBUG_THINKING=false
+      # - ANYTHINGLLM_API_KEY=${ANYTHINGLLM_API_KEY}
+      # - ANYTHINGLLM_WORKSPACE_SLUG=MBBuddy
+      # - ANYTHINGLLM_DEBUG_THINKING=false
     extra_hosts:
       - "host.docker.internal:host-gateway"  # 允許容器訪問主機服務
-    # volumes:
-      # - ../ai_models:/app/ai_models:ro  # 已移除本地模型目錄掛載
     restart: unless-stopped
     networks:
-      - syncai-network
+      - mbbuddy-network
   frontend:
     build:
       context: ..
       dockerfile: docker/Dockerfile.frontend
-    image: syncai/frontend:latest
-    container_name: syncai-frontend
+    image: mbbuddy/frontend:latest
+    container_name: mbbuddy-frontend
     ports:
       - "0.0.0.0:80:80"
     depends_on:
       - backend
     restart: unless-stopped
     networks:
-      - syncai-network
+      - mbbuddy-network
 networks:
-  syncai-network:
+  mbbuddy-network:
     driver: bridge

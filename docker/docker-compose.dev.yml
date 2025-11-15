@@ -4,41 +4,41 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
-    image: syncai/backend:latest
-    container_name: syncai-backend-dev
+    image: mbbuddy-backend:dev
+    container_name: mbbuddy-backend-dev
     ports:
       - "0.0.0.0:8001:8000"
     volumes:
-      - ../backend:/app/backend
-      - ../frontend/syncai-frontend/public:/app/frontend/syncai-frontend/public
-      # - ../ai_models:/app/ai_models  # 已移除本地模型目錄掛載
+      - ../backend:/app
+    env_file:
+      - ../backend/.env
     environment:
       - PYTHONPATH=/app
       - ANYTHINGLLM_BASE_URL=http://host.docker.internal:3001
-      - ANYTHINGLLM_API_KEY=9NRCY7R-R5N4JC5-QYKN559-TMJX9SH
-      - ANYTHINGLLM_WORKSPACE_SLUG=mac
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
     networks:
-      - syncai-network
+      - mbbuddy-network
 
   frontend:
     build:
       context: ..
       dockerfile: docker/Dockerfile.frontend.dev
-    image: syncai/frontend:dev
-    container_name: syncai-frontend-dev
+    image: mbbuddy-frontend:dev
+    container_name: mbbuddy-frontend-dev
     ports:
       - "0.0.0.0:5173:5173"
     volumes:
-      - ../frontend/syncai-frontend:/app
+      - ../frontend:/app
       - /app/node_modules
     depends_on:
       - backend
     restart: unless-stopped
     networks:
-      - syncai-network
+      - mbbuddy-network
 
 networks:
-  syncai-network:
+  mbbuddy-network:
     driver: bridge

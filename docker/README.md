@@ -3,7 +3,8 @@
 ## 🚀 快速開始
 
 ### 開發環境
-開發環境支援熱重載，修改代碼會自動更新。
+* 開發環境支援熱重載，修改代碼會自動更新。
+* ⚠️ 開發環境須於 `backend` 資料夾內，新增 `.env` 並存入 API key（有提供範例檔參考）
 ```bash
 # 啟動開發環境 (熱重載)
 docker-compose -f docker/docker-compose.dev.yml up -d
@@ -13,6 +14,10 @@ docker-compose -f docker/docker-compose.dev.yml logs -f
 
 # 停止
 docker-compose -f docker/docker-compose.dev.yml down
+
+# 重新啟動（停止+啟動）
+docker-compose -f docker/docker-compose.dev.yml down
+docker-compose -f docker/docker-compose.dev.yml up -d
 ```
 
 ### 生產環境
@@ -116,6 +121,6 @@ docker-compose -f docker/docker-compose.dev.yml logs
 3. 確認 IP 地址是否正確
 
 ### AI 模型載入失敗
-1. 確認 `ai_models/` 資料夾中有模型檔案
+1. 確認 `backend/ai_models/` 資料夾中有模型檔案
 2. 檢查 Docker 記憶體限制
 3. 查看後端啟動日誌

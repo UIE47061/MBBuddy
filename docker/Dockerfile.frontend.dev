@@ -5,7 +5,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # 複製 package.json 和 package-lock.json (如果存在)
-COPY frontend/syncai-frontend/package*.json ./
+COPY frontend/package*.json ./
 
 # 安裝依賴
 RUN npm install

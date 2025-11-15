@@ -9,14 +9,13 @@ WORKDIR /app
 RUN apk add --no-cache git python3 make g++
 
 # 複製 package.json 和 package-lock.json (如果存在)
-COPY frontend/syncai-frontend/package*.json ./
+COPY frontend/package*.json ./
 
-# 設定 npm 配置並安裝依賴
-RUN npm config set legacy-peer-deps true && \
-    npm install
+# 安裝依賴
+RUN npm install
 
 # 複製應用程式碼
-COPY frontend/syncai-frontend/ .
+COPY frontend/ .
 
 # 構建應用
 RUN npm run build

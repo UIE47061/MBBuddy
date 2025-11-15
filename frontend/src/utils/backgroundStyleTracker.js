@@ -112,7 +112,7 @@ export class BackgroundStyleTracker {
       currentPrompt: null,
       metadata: {
         hostId: this.generateHostId(),
-        userAgent: 'SyncAI_Host',
+        userAgent: 'MBBuddy_Host',
         iterationCount: 0
       }
     }

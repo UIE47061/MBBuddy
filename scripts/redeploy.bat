@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI 快速重新部署腳本
-REM 用於已完成初始設置的 SyncAI 環境
+REM MBBuddy 快速重新部署腳本
+REM 用於已完成初始設置的 MBBuddy 環境
 
 setlocal enabledelayedexpansion
 
 echo.
 echo ==========================================
-echo      SyncAI 快速重新部署
+echo      MBBuddy 快速重新部署
 echo ==========================================
 echo.
 
@@ -101,6 +101,6 @@ exit /b 0
 
 :error_dir
 echo [ERROR] 無法找到專案目錄結構
-echo 請確保您在 SyncAI 專案根目錄中執行此腳本
+echo 請確保您在 MBBuddy 專案根目錄中執行此腳本
 pause
 exit /b 1

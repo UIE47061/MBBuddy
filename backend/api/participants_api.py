@@ -6,8 +6,11 @@ import platform
 import os
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from .utility import export_room_pdf
+from .pdf_generate import export_room_pdf
 from .ai_client import ai_client
+from utility.logger import get_logger
+
+logger = get_logger("mbbuddy.ai")
 
 # --- Pydantic Models for RESTful API ---
 class CommentRequest(BaseModel):
@@ -108,10 +111,10 @@ def get_chinese_font():
     for font_name, font_path in font_map.items():
         try:
             pdfmetrics.registerFont(TTFont(font_name, font_path))
-            print(f"PDF匯出：成功註冊字型 '{font_name}' 從路徑 '{font_path}'")
+            logger.info(f"PDF匯出：成功註冊字型 '{font_name}' 從路徑 '{font_path}'")
             return font_name
         except Exception as e:
-            print(f"嘗試註冊字型 '{font_name}' 失敗: {e}")
+            logger.warning(f"嘗試註冊字型 '{font_name}' 失敗: {e}")
             continue # 如果找不到或註冊失敗，繼續嘗試下一個
     
     # 如果預設路徑都失敗，嘗試使用系統命令查找字體
@@ -129,16 +132,16 @@ def get_chinese_font():
                             try:
                                 font_name = f"SystemFont_{len(font_path)}"  # 使用唯一名稱
                                 pdfmetrics.registerFont(TTFont(font_name, font_path))
-                                print(f"PDF匯出：通過 fc-list 成功註冊字型 '{font_name}' 從路徑 '{font_path}'")
+                                logger.info(f"PDF匯出：通過 fc-list 成功註冊字型 '{font_name}' 從路徑 '{font_path}'")
                                 return font_name
                             except Exception as e:
-                                print(f"fc-list 找到的字體註冊失敗 '{font_path}': {e}")
+                                logger.warning(f"fc-list 找到的字體註冊失敗 '{font_path}': {e}")
                                 continue
         except Exception as e:
-            print(f"使用 fc-list 查找字體時發生錯誤: {e}")
+            logger.error(f"使用 fc-list 查找字體時發生錯誤: {e}")
             
     # 如果所有預設字型都找不到，發出警告並使用備用字型
-    print("警告：在系統預設路徑中找不到任何可用的中文字型，PDF 中文可能無法正常顯示。")
+    logger.warning("在系統預設路徑中找不到任何可用的中文字型，PDF 中文可能無法正常顯示。")
     return 'Helvetica'
 
 FONT_NAME = get_chinese_font()
@@ -263,9 +266,9 @@ async def create_room(room: RoomCreate):
         if workspace_info and "id" in workspace_info:
             ROOMS[code]["workspace_id"] = workspace_info["id"]
         
-        print(f"✅ 討論 '{title}' (代碼: {code}) 的專屬workspace已創建: {workspace_slug}")
+        logger.info(f"✅ 討論 '{title}' (代碼: {code}) 的專屬workspace已創建: {workspace_slug}")
     except Exception as e:
-        print(f"⚠️ 為討論 '{title}' 創建workspace時發生錯誤: {e}")
+        logger.warning(f"⚠️ 為討論 '{title}' 創建workspace時發生錯誤: {e}")
         # 不影響討論創建，workspace可以稍後創建
         pass
     

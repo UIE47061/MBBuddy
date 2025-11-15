@@ -6,6 +6,7 @@ Snapdragon Elite X平台優化配置
 import os
 import platform
 from typing import Dict, Any, Optional
+from utility.config import env
 
 class SnapdragonEliteXConfig:
     """Snapdragon Elite X平台配置管理器"""
@@ -27,8 +28,8 @@ class SnapdragonEliteXConfig:
     def _is_snapdragon_elite_x(self) -> bool:
         """檢測是否為Snapdragon Elite X平台"""
         # 在實際部署時，這裡可以通過更精確的檢測方式
-        # 目前使用環境變量或ARM64架構作為指示
-        if os.getenv("SNAPDRAGON_ELITE_X", "false").lower() == "true":
+        # 目前使用環境變量或ARM64架構作為指示 - 從統一配置讀取
+        if env.SNAPDRAGON_ELITE_X:
             return True
         
         machine = platform.machine().lower()

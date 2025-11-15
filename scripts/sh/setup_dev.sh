@@ -43,9 +43,9 @@ else
 fi
 
 # 啟動虛擬環境並安裝依賴
-echo "  安裝後端依賴套件..."
+echo " 安裝後端依賴套件..."
 source .venv/bin/activate
-pip install -r requirement.txt
+pip install -r backend/requirements.txt
 
 echo "🎨 設置前端環境..."
 
@@ -56,7 +56,7 @@ if ! command -v npm >/dev/null 2>&1; then
 fi
 
 # 進入前端目錄並安裝依賴
-cd frontend/syncai-frontend
+cd frontend
 echo "  安裝前端依賴套件..."
 npm install
 

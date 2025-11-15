@@ -1,9 +1,0 @@
-{
-  "name": "syncai-frontend",
-  "version": "0.1.0",
-  "license": "MIT",
-  "dependencies": {
-    "uuid": "^11.1.0",
-    "vue-router": "^4.5.1"
-  }
-}

@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI One-Click Installation Script for Windows
+REM MBBuddy One-Click Installation Script for Windows
 REM This script will automatically:
 REM 1. Clone the repository (if needed)
 REM 2. Download AI model
@@ -13,7 +13,7 @@ setlocal enabledelayedexpansion
 
 echo.
 echo =====================================
-echo    SyncAI One-Click Installation
+echo    MBBuddy One-Click Installation
 echo =====================================
 echo.
 echo This script will:
@@ -31,19 +31,19 @@ REM =====================================
 echo.
 echo [Step 1/6] Checking project repository...
 
-set "REPO_URL=https://github.com/UIE47061/SyncAI.git"
-set "PROJECT_NAME=SyncAI"
+set "REPO_URL=https://github.com/UIE47061/MBBuddy.git"
+set "PROJECT_NAME=MBBuddy"
 
-REM Check if we're already in SyncAI directory
+REM Check if we're already in MBBuddy directory
 if exist "package.json" if exist "backend" if exist "frontend" (
-    echo [SUCCESS] Already in SyncAI project directory
+    echo [SUCCESS] Already in MBBuddy project directory
     set "PROJECT_ROOT=%CD%"
     goto :check_git
 )
 
-REM Check if SyncAI directory exists in current location
+REM Check if MBBuddy directory exists in current location
 if exist "%PROJECT_NAME%" (
-    echo [INFO] Found existing SyncAI directory
+    echo [INFO] Found existing MBBuddy directory
     cd /d "%PROJECT_NAME%"
     set "PROJECT_ROOT=%CD%"
     goto :check_git
@@ -59,7 +59,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [INFO] Cloning SyncAI repository...
+echo [INFO] Cloning MBBuddy repository...
 git clone %REPO_URL%
 if %errorlevel% neq 0 (
     echo [ERROR] Repository clone failed
@@ -208,7 +208,7 @@ REM Create start script
 (
 echo @echo off
 echo chcp 65001 ^>nul
-echo echo Starting SyncAI meeting room services...
+echo echo Starting MBBuddy meeting room services...
 echo cd /d "%PROJECT_ROOT%"
 echo docker-compose -f docker/docker-compose.yml up -d
 echo echo Services started!
@@ -221,7 +221,7 @@ REM Create stop script
 (
 echo @echo off
 echo chcp 65001 ^>nul
-echo echo Stopping SyncAI meeting room services...
+echo echo Stopping MBBuddy meeting room services...
 echo cd /d "%PROJECT_ROOT%"
 echo docker-compose -f docker/docker-compose.yml down
 echo echo Services stopped!
@@ -232,7 +232,7 @@ REM Create status script
 (
 echo @echo off
 echo chcp 65001 ^>nul
-echo echo SyncAI meeting room service status:
+echo echo MBBuddy meeting room service status:
 echo cd /d "%PROJECT_ROOT%"
 echo docker-compose -f docker/docker-compose.yml ps
 echo echo.
@@ -245,7 +245,7 @@ REM Create restart script
 (
 echo @echo off
 echo chcp 65001 ^>nul
-echo echo Restarting SyncAI meeting room services...
+echo echo Restarting MBBuddy meeting room services...
 echo cd /d "%PROJECT_ROOT%"
 echo docker-compose -f docker/docker-compose.yml restart
 echo echo Services restarted!

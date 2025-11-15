@@ -29,14 +29,6 @@ if not exist ".venv" (
     exit /b 1
 )
 
-REM Check if model file exists
-if not exist "ai_models\mistral-7b-instruct-v0.2.Q5_K_M.gguf" (
-    echo [ERROR] AI model file not found
-    echo Please run: download_model.bat
-    pause
-    exit /b 1
-)
-
 echo [INFO] Starting backend service...
 REM Start backend service in background
 call .venv\Scripts\activate.bat
@@ -45,10 +37,10 @@ echo   Backend service started
 
 echo [INFO] Starting frontend service...
 REM Start frontend service in background
-cd frontend\syncai-frontend
-start /b cmd /c "npm run dev -- --host > ..\..\frontend.log 2>&1"
+cd frontend
+start /b cmd /c "npm run dev -- --host > ..\frontend.log 2>&1"
 echo   Frontend service started
-cd ..\..
+cd ..
 
 REM Wait for services to start
 echo [INFO] Waiting for services to start...

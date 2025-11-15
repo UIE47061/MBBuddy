@@ -6,8 +6,8 @@ from pathlib import Path
 router = APIRouter()
 
 # 獲取正確的文件路徑
-BASE_DIR = Path(__file__).parent.parent.parent  # 回到 SyncAI 根目錄
-JSON_FILE_PATH = BASE_DIR / "frontend" / "syncai-frontend" / "src" / "utils" / "hostStyle.json"
+BASE_DIR = Path(__file__).parent.parent.parent  # 回到 MBBuddy 根目錄
+JSON_FILE_PATH = BASE_DIR / "frontend" / "src" / "utils" / "hostStyle.json"
 
 @router.post("/api/update-host-style")
 async def update_host_style(style_data: dict):
@@ -53,7 +53,7 @@ async def get_host_style():
                 "currentPrompt": None,
                 "metadata": {
                     "hostId": "host_default", 
-                    "userAgent": "SyncAI_Host",
+                    "userAgent": "MBBuddy_Host",
                     "iterationCount": 0
                 }
             }

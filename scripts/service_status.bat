@@ -1,13 +1,13 @@
 @echo off
 chcp 65001 >nul
-REM SyncAI 服務狀態檢查和控制腳本
-REM 用於已完成安裝的 SyncAI 環境
+REM MBBuddy 服務狀態檢查和控制腳本
+REM 用於已完成安裝的 MBBuddy 環境
 
 setlocal enabledelayedexpansion
 
 echo.
 echo ==========================================
-echo      SyncAI 服務狀態檢查
+echo      MBBuddy 服務狀態檢查
 echo ==========================================
 echo.
 
@@ -30,21 +30,21 @@ if %errorlevel% neq 0 (
 echo [SUCCESS] Docker 檢查完成
 echo.
 
-REM 檢查 SyncAI 容器狀態
-echo [INFO] 檢查 SyncAI 服務狀態...
-docker ps --filter "name=syncai" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | findstr "syncai" >nul 2>&1
+REM 檢查 MBBuddy 容器狀態
+echo [INFO] 檢查 MBBuddy 服務狀態...
+docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | findstr "mbbuddy" >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [SUCCESS] SyncAI 服務正在運行
+    echo [SUCCESS] MBBuddy 服務正在運行
     echo.
     echo [容器狀態]
-    docker ps --filter "name=syncai" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     goto :show_access_info
 ) else (
-    echo [INFO] SyncAI 服務未運行
+    echo [INFO] MBBuddy 服務未運行
     echo.
     echo 選擇操作：
-    echo   1. 啟動 SyncAI 服務
-    echo   2. 重新部署 SyncAI 服務
+    echo   1. 啟動 MBBuddy 服務
+    echo   2. 重新部署 MBBuddy 服務
     echo   3. 只顯示訪問資訊
     echo   4. 退出
     echo.
@@ -62,7 +62,7 @@ if %errorlevel% equ 0 (
 
 :start_services
 echo.
-echo [INFO] 啟動 SyncAI 服務...
+echo [INFO] 啟動 MBBuddy 服務...
 
 REM 讀取環境變數
 if exist ".env" (
@@ -91,7 +91,7 @@ if %errorlevel% equ 0 (
 
 :redeploy_services
 echo.
-echo [INFO] 重新部署 SyncAI 服務...
+echo [INFO] 重新部署 MBBuddy 服務...
 
 REM 讀取環境變數
 if exist ".env" (
@@ -122,13 +122,13 @@ if %errorlevel% equ 0 (
 :show_access_info
 echo.
 echo ==========================================
-echo           🎉 SyncAI 服務資訊 🎉
+echo           🎉 MBBuddy 服務資訊 🎉
 echo ==========================================
 echo.
 
 REM 顯示容器最終狀態
 echo [容器狀態]
-docker ps --filter "name=syncai" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+docker ps --filter "name=MBBuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
 
 echo.
 echo [訪問地址]
@@ -179,14 +179,14 @@ echo   一鍵安裝: scripts\one_click_install.bat
 echo.
 
 REM 提供快捷操作
-set /p open_browser="是否現在打開 SyncAI 前端? (Y/N): "
+set /p open_browser="是否現在打開 MBBuddy 前端? (Y/N): "
 if /i "!open_browser!"=="Y" (
     start http://localhost
 )
 
 echo.
 echo ==========================================
-echo        SyncAI 服務檢查完成！ 🚀
+echo        MBBuddy 服務檢查完成！ 🚀
 echo ==========================================
 
 pause
