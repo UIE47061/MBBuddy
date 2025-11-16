@@ -119,6 +119,7 @@
     <!-- AI心智圖彈窗 -->
     <MindMapModal
       :show="showMindMapModal"
+      :room-code="roomCode"
       @close="showMindMapModal = false"
     />
   </div>

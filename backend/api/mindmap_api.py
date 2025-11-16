@@ -1,11 +1,85 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 import os
 import tempfile
 from datetime import datetime
 import json
+from typing import Optional
+from .participants_api import ROOMS, topics, votes
+from .transparent_fusion import transparent_fusion
+from .ai_client import ai_client
 
 router = APIRouter(prefix="/api/mindmap", tags=["mindmap"])
+
+class MindMapRequest(BaseModel):
+    """心智圖生成請求模型"""
+    room_code: Optional[str] = None  # 討論室代碼,如果提供則從討論室生成
+    custom_content: Optional[str] = None  # 自訂內容,如果沒有討論室則使用
+
+def build_mindmap_prompt(room_code: str) -> str:
+    """構建心智圖生成的 prompt"""
+    if room_code not in ROOMS:
+        return None
+    
+    room_data = ROOMS[room_code]
+    prompt = f"""請為以下討論室的內容生成一個結構化的心智圖 Markdown 格式總結。"""
+    
+    # 獲取所有主題及其討論內容
+    room_topics = [(t_id, t) for t_id, t in topics.items() if t["room_id"] == room_code]
+    
+    if not room_topics:
+        prompt += "目前討論室還沒有任何主題。\n"
+        return prompt
+    
+    prompt += "討論主題與內容:\n\n"
+    
+    for topic_id, topic_data in room_topics:
+        topic_name = topic_data.get("topic_name", "未命名主題")
+        prompt += f"## 主題: {topic_name}\n\n"
+        
+        # 添加留言
+        if "comments" in topic_data and topic_data["comments"]:
+            prompt += "留言:\n"
+            for comment in topic_data["comments"]:
+                comment_id = comment.get("id")
+                nickname = comment.get("nickname", "匿名")
+                content = comment.get("content", "")
+                
+                # 獲取票數
+                good_votes = len(votes.get(comment_id, {}).get("good", []))
+                bad_votes = len(votes.get(comment_id, {}).get("bad", []))
+                
+                prompt += f"- {nickname}: {content} (👍{good_votes} 👎{bad_votes})\n"
+            prompt += "\n"
+    
+    prompt += """
+請根據以上內容,生成一個結構化的心智圖 Markdown 格式:
+
+要求:
+1. 使用 # 作為主標題 (主題列表)
+2. 使用 ## 作為次級標題 (各個討論主題)
+3. 使用 - 作為要點列表 (重要觀點、共識、分歧點)
+4. 內容要精煉、結構清晰
+5. 突出重點和共識
+6. 標注有爭議的觀點
+7. 使用繁體中文
+
+範例格式:
+# 討論主題名稱
+## 主題一
+- 主要觀點1
+- 主要觀點2
+- 共識: xxx
+## 主題二  
+- 重點1
+- 重點2
+- 分歧: xxx
+
+請直接輸出 Markdown 格式,不要任何前綴說明:
+"""
+    
+    return prompt
 
 def parse_markdown_to_simple_structure(markdown_content):
     """將markdown文字解析為簡單結構以便測試"""
@@ -241,25 +315,91 @@ def create_simple_svg_mindmap(structure):
     return svg_content
 
 @router.post("/generate")
-async def generate_mindmap():
-    """生成心智圖"""
+async def generate_mindmap(request: MindMapRequest = None):
+    """生成心智圖 - 支援從討論室 AI 生成或使用自訂內容"""
     try:
-        # 在Docker環境中尋找AIresult.txt檔案
-        possible_paths = [
-            "frontend/public/AIresult.txt",
-            "/app/frontend/public/AIresult.txt",
-            "../frontend/public/AIresult.txt"
-        ]
+        print(f"📊 收到心智圖生成請求: {request}")
+        markdown_content = None
         
-        file_path = None
-        for path in possible_paths:
-            if os.path.exists(path):
-                file_path = path
-                break
+        # 優先使用討論室代碼生成
+        if request and request.room_code:
+            room_code = request.room_code
+            print(f"🏠 使用討論室代碼: {room_code}")
+            
+            # 檢查討論室是否存在
+            if room_code not in ROOMS:
+                print(f"❌ 找不到討論室: {room_code}")
+                raise HTTPException(status_code=404, detail=f"找不到討論室: {room_code}")
+            
+            # 構建 prompt
+            prompt = build_mindmap_prompt(room_code)
+            if not prompt:
+                print(f"❌ 無法構建 prompt")
+                raise HTTPException(status_code=400, detail="無法構建心智圖 prompt")
+            
+            print(f"📝 已構建 prompt, 長度: {len(prompt)}")
+            
+            # 使用 AI 生成心智圖 markdown
+            try:
+                room_data = ROOMS[room_code]
+                workspace_slug = room_data.get('workspace_slug')
+                
+                if not workspace_slug:
+                    print(f"⚠️ 討論 {room_code} 沒有預設workspace,正在創建...")
+                    workspace_slug = await ai_client.ensure_workspace_exists(
+                        room_code, 
+                        room_data.get('title', f'討論室-{room_code}')
+                    )
+                    ROOMS[room_code]['workspace_slug'] = workspace_slug
+                
+                print(f"🤖 使用 AI 生成心智圖 for 討論室: {room_code}, workspace: {workspace_slug}")
+                markdown_content = await transparent_fusion.process_request(
+                    prompt, 
+                    workspace_slug, 
+                    task_type="mindmap"
+                )
+                
+                print(f"✅ AI 生成成功, markdown 長度: {len(markdown_content)}")
+                
+                # 清理可能的 markdown 代碼塊標記
+                markdown_content = markdown_content.strip()
+                if markdown_content.startswith('```'):
+                    lines = markdown_content.split('\n')
+                    markdown_content = '\n'.join(lines[1:-1]) if len(lines) > 2 else markdown_content
+                    print(f"🧹 已清理 markdown 代碼塊標記")
+                    
+            except Exception as e:
+                print(f"❌ AI 生成失敗: {str(e)}, 使用預設內容")
+                markdown_content = f"""# {ROOMS[room_code].get('title', '討論總結')}"""
         
-        if not file_path:
-            # 如果找不到檔案，提供一個預設的示例
-            markdown_content = """# AI心智圖示例
+        # 其次使用自訂內容
+        elif request and request.custom_content:
+            print(f"📄 使用自訂內容")
+            markdown_content = request.custom_content
+        
+        # 最後嘗試從檔案讀取
+        else:
+            print(f"📂 嘗試從檔案讀取")
+            possible_paths = [
+                "frontend/public/AIresult.txt",
+                "/app/frontend/public/AIresult.txt",
+                "../frontend/public/AIresult.txt"
+            ]
+            
+            file_path = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    file_path = path
+                    break
+            
+            if file_path:
+                print(f"✅ 找到檔案: {file_path}")
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    markdown_content = f.read()
+            else:
+                print(f"⚠️ 未找到檔案,使用預設示例")
+                # 預設示例
+                markdown_content = """# AI心智圖示例
 ## 人工智慧應用
 - 機器學習
 - 深度學習
@@ -268,22 +408,26 @@ async def generate_mindmap():
 - 神經網路
 - 大型語言模型
 - 電腦視覺"""
-        else:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                markdown_content = f.read()
         
+        print(f"🔄 開始解析 markdown...")
         # 解析markdown為簡單結構
         structure = parse_markdown_to_simple_structure(markdown_content)
         
         if not structure:
+            print(f"❌ 無法解析 markdown 內容")
             raise HTTPException(status_code=400, detail="無法解析markdown內容")
         
+        print(f"✅ 解析成功,結構元素數量: {len(structure)}")
+        
         # 創建SVG心智圖
+        print(f"🎨 開始創建 SVG...")
         svg_content = create_simple_svg_mindmap(structure)
+        print(f"✅ SVG 創建成功,長度: {len(svg_content)}")
         
         # 保存到臨時檔案
         with tempfile.NamedTemporaryFile(delete=False, suffix='.svg', mode='w', encoding='utf-8') as tmp_file:
             tmp_file.write(svg_content)
+            print(f"💾 已保存到臨時檔案: {tmp_file.name}")
             
             return FileResponse(
                 tmp_file.name,
@@ -291,5 +435,60 @@ async def generate_mindmap():
                 filename=f'mindmap_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
             )
             
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"❌ 生成心智圖時發生錯誤: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"生成心智圖時發生錯誤: {str(e)}")
+
+@router.post("/preview")
+async def preview_mindmap_markdown(request: MindMapRequest):
+    """預覽心智圖的 Markdown 內容 (用於測試和調試)"""
+    try:
+        if not request.room_code:
+            raise HTTPException(status_code=400, detail="需要提供 room_code")
+        
+        room_code = request.room_code
+        
+        if room_code not in ROOMS:
+            raise HTTPException(status_code=404, detail=f"找不到討論室: {room_code}")
+        
+        # 構建 prompt
+        prompt = build_mindmap_prompt(room_code)
+        if not prompt:
+            raise HTTPException(status_code=400, detail="無法構建心智圖 prompt")
+        
+        # 使用 AI 生成心智圖 markdown
+        room_data = ROOMS[room_code]
+        workspace_slug = room_data.get('workspace_slug')
+        
+        if not workspace_slug:
+            workspace_slug = await ai_client.ensure_workspace_exists(
+                room_code, 
+                room_data.get('title', f'討論室-{room_code}')
+            )
+            ROOMS[room_code]['workspace_slug'] = workspace_slug
+        
+        markdown_content = await transparent_fusion.process_request(
+            prompt, 
+            workspace_slug, 
+            task_type="mindmap"
+        )
+        
+        # 清理可能的 markdown 代碼塊標記
+        markdown_content = markdown_content.strip()
+        if markdown_content.startswith('```'):
+            lines = markdown_content.split('\n')
+            markdown_content = '\n'.join(lines[1:-1]) if len(lines) > 2 else markdown_content
+        
+        return {
+            "room_code": room_code,
+            "room_title": room_data.get('title'),
+            "markdown": markdown_content,
+            "prompt_used": prompt
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"預覽失敗: {str(e)}")

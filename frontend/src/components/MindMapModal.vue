@@ -89,6 +89,10 @@ const props = defineProps({
   show: {
     type: Boolean,
     default: false
+  },
+  roomCode: {
+    type: String,
+    default: ''
   }
 })
 
@@ -112,6 +116,9 @@ watch(() => props.show, (newShow) => {
 
 function close() {
   // 重置狀態，下次開啟時重新生成
+  if (mindMapUrl.value) {
+    URL.revokeObjectURL(mindMapUrl.value)
+  }
   mindMapUrl.value = ''
   error.value = ''
   zoomLevel.value = 1
@@ -140,26 +147,40 @@ function applyZoom() {
 async function generateMindMap() {
   loading.value = true
   error.value = ''
+  
+  // 釋放舊的 blob URL 避免記憶體洩漏
+  if (mindMapUrl.value) {
+    URL.revokeObjectURL(mindMapUrl.value)
+  }
   mindMapUrl.value = ''
   
   try {
+    // 構建請求體,如果有 roomCode 則傳送
+    const requestBody = props.roomCode ? { room_code: props.roomCode } : {}
+    
+    console.log('🎨 開始生成心智圖...', requestBody)
+    
     const response = await fetch(`${API_BASE_URL}/api/mindmap/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify(requestBody)
     })
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      const errorText = await response.text()
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
     }
     
     const blob = await response.blob()
     mindMapUrl.value = URL.createObjectURL(blob)
     
+    console.log('✅ 心智圖生成成功')
+    
   } catch (err) {
-    console.error('生成心智圖失敗:', err)
-    error.value = '生成心智圖失敗，請稍後再試'
+    console.error('❌ 生成心智圖失敗:', err)
+    error.value = `生成心智圖失敗: ${err.message}`
   } finally {
     loading.value = false
   }
