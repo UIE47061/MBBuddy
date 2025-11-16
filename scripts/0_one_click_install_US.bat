@@ -60,8 +60,10 @@ if %errorlevel% equ 0 (
     echo [INFO] Found running MBBuddy services:
     docker ps --filter "name=mbbuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}" 2>nul
     echo.
-    set /p skip_setup="MBBuddy is already running. Skip installation and show access info? (y/n): "
-    if /i "!skip_setup!"=="Y" (
+    set /p "skip_setup=MBBuddy is already running. Skip installation and show access info? (Y/n): "
+    if "!skip_setup!"=="" set "skip_setup=y"
+    set "skip_setup=!skip_setup: =!"
+    if /i "!skip_setup!"=="y" (
         goto :show_access_info
     )
     echo [INFO] Reinstalling and reconfiguring MBBuddy...
@@ -115,8 +117,10 @@ echo 3. Complete Docker Desktop initial setup
 echo 4. Ensure Docker Desktop is running
 echo 5. Rerun this script to continue MBBuddy installation
 echo.
-set /p restart_now="Restart computer now? (y/n): "
-if /i "!restart_now!"=="Y" (
+set /p "restart_now=Restart computer now? (Y/n): "
+if "!restart_now!"=="" set "restart_now=y"
+set "restart_now=!restart_now: =!"
+if /i "!restart_now!"=="y" (
     echo [INFO] Computer will restart in 10 seconds...
     shutdown /r /t 10 /c "Restarting to complete Docker installation"
     echo Press any key to cancel...
@@ -183,8 +187,10 @@ echo 2. Restart Docker Desktop
 echo 3. Check WSL2 status (wsl --status)
 echo 4. Reboot your computer
 echo.
-set /p continue_anyway="Docker service may not be fully ready. Continue anyway? (y/n): "
-if /i "!continue_anyway!"=="Y" (
+set /p "continue_anyway=Docker service may not be fully ready. Continue anyway? (Y/n): "
+if "!continue_anyway!"=="" set "continue_anyway=y"
+set "continue_anyway=!continue_anyway: =!"
+if /i "!continue_anyway!"=="y" (
     echo [WARNING] Continuing, but Docker-related errors may occur
     goto :docker_ready
 )
@@ -197,7 +203,7 @@ echo [SUCCESS] Docker check complete
 echo.
 
 REM =====================================
-REM Step 2: AnythingLLM download and setup guide
+REM Step 2: AnythingLLM download and setup
 REM =====================================
 echo ==========================================
 echo Step 2/6: AnythingLLM download and setup
@@ -205,30 +211,236 @@ echo ==========================================
 echo.
 echo AnythingLLM is the core AI engine for MBBuddy; it must be downloaded and set up separately
 echo.
-echo [Important] Please follow the steps below:
-echo.
-echo 1. Download the AnythingLLM Desktop edition
-echo    Download: https://anythingllm.com/download
-echo    Choose the "Desktop" edition for your operating system
-echo.
-echo 2. Install and launch AnythingLLM
-echo    - Run the downloaded installer
-echo    - Finish installation and launch AnythingLLM
-echo    - During installation choose AnythingLLM NPU; select any model you prefer
-echo    - After initial setup, go to Settings > System Admin > General and enable `Enable network discovery`
-echo.
-echo 3. Ensure AnythingLLM is running at localhost:3001
-echo    (This is the default port; note it if different)
+
+REM Check if AnythingLLM is installed and running
+echo [INFO] Checking AnythingLLM installation status...
+tasklist /FI "IMAGENAME eq AnythingLLM.exe" 2>nul | find /I /N "AnythingLLM.exe" >nul
+if %errorlevel% equ 0 (
+    echo [SUCCESS] AnythingLLM is installed and running
+    goto :anythingllm_installed
+)
+tasklist /FI "IMAGENAME eq AnythingLLMDesktop.exe" 2>nul | find /I /N "AnythingLLMDesktop.exe" >nul
+if %errorlevel% equ 0 (
+    echo [SUCCESS] AnythingLLM is installed and running
+    goto :anythingllm_installed
+)
+
+REM Check if installed but not running (multiple possible installation locations)
+set "ANYTHINGLLM_PATH="
+
+REM Check location 1: LocalAppData\Programs\AnythingLLM (new version filename)
+if exist "%LOCALAPPDATA%\Programs\AnythingLLM\AnythingLLM.exe" (
+    set "ANYTHINGLLM_PATH=%LOCALAPPDATA%\Programs\AnythingLLM\AnythingLLM.exe"
+)
+
+REM Check location 2: LocalAppData\Programs\anythingllm-desktop (old version)
+if exist "%LOCALAPPDATA%\Programs\anythingllm-desktop\AnythingLLMDesktop.exe" (
+    set "ANYTHINGLLM_PATH=%LOCALAPPDATA%\Programs\anythingllm-desktop\AnythingLLMDesktop.exe"
+)
+
+REM Check location 3: AppData\Local\AnythingLLM
+if exist "%LOCALAPPDATA%\AnythingLLM\AnythingLLM.exe" (
+    set "ANYTHINGLLM_PATH=%LOCALAPPDATA%\AnythingLLM\AnythingLLM.exe"
+)
+if exist "%LOCALAPPDATA%\AnythingLLM\AnythingLLMDesktop.exe" (
+    set "ANYTHINGLLM_PATH=%LOCALAPPDATA%\AnythingLLM\AnythingLLMDesktop.exe"
+)
+
+REM Check location 4: Program Files
+if exist "%ProgramFiles%\AnythingLLM\AnythingLLM.exe" (
+    set "ANYTHINGLLM_PATH=%ProgramFiles%\AnythingLLM\AnythingLLM.exe"
+)
+if exist "%ProgramFiles%\AnythingLLM\AnythingLLMDesktop.exe" (
+    set "ANYTHINGLLM_PATH=%ProgramFiles%\AnythingLLM\AnythingLLMDesktop.exe"
+)
+
+REM Check location 5: Program Files (x86)
+if exist "%ProgramFiles(x86)%\AnythingLLM\AnythingLLM.exe" (
+    set "ANYTHINGLLM_PATH=%ProgramFiles(x86)%\AnythingLLM\AnythingLLM.exe"
+)
+if exist "%ProgramFiles(x86)%\AnythingLLM\AnythingLLMDesktop.exe" (
+    set "ANYTHINGLLM_PATH=%ProgramFiles(x86)%\AnythingLLM\AnythingLLMDesktop.exe"
+)
+
+REM Check location 6: User directory AppData\Local\Programs
+if exist "%USERPROFILE%\AppData\Local\Programs\anythingllm-desktop\AnythingLLMDesktop.exe" (
+    set "ANYTHINGLLM_PATH=%USERPROFILE%\AppData\Local\Programs\anythingllm-desktop\AnythingLLMDesktop.exe"
+)
+if exist "%USERPROFILE%\AppData\Local\Programs\AnythingLLM\AnythingLLM.exe" (
+    set "ANYTHINGLLM_PATH=%USERPROFILE%\AppData\Local\Programs\AnythingLLM\AnythingLLM.exe"
+)
+
+REM If installation path found, start AnythingLLM (use /B to start in background)
+if not "!ANYTHINGLLM_PATH!"=="" (
+    echo [SUCCESS] Found AnythingLLM installed but not running
+    echo [INFO] Installation path: !ANYTHINGLLM_PATH!
+    echo [INFO] Starting AnythingLLM...
+    start /B "" "!ANYTHINGLLM_PATH!" >nul 2>&1
+    timeout /t 5 /nobreak >nul
+    goto :wait_anythingllm_ready
+)
+
+REM If not found in all locations, ask user
+echo [INFO] AnythingLLM installation file not found in common locations
+echo [INFO] Checked the following locations:
+echo        - %LOCALAPPDATA%\Programs\AnythingLLM\
+echo        - %LOCALAPPDATA%\Programs\anythingllm-desktop\
+echo        - %LOCALAPPDATA%\AnythingLLM\
+echo        - %ProgramFiles%\AnythingLLM\
+echo        - %ProgramFiles(x86)%\AnythingLLM\
+echo        - %USERPROFILE%\AppData\Local\Programs\anythingllm-desktop\
+echo        - %USERPROFILE%\AppData\Local\Programs\AnythingLLM\
 echo.
 
-set /p llm_ready="After installing AnythingLLM and confirming it is running, enter y to continue: "
-if /i not "!llm_ready!"=="Y" (
-    echo  [INFO] Please complete the AnythingLLM setup and rerun this script
+REM Ask user if already installed
+set /p "already_installed=Have you already installed AnythingLLM? (Y/n): "
+if "!already_installed!"=="" set "already_installed=y"
+set "already_installed=!already_installed: =!"
+if /i "!already_installed!"=="y" (
+    echo.
+    echo [INFO] Please choose from the following options:
+    echo   1. Manually start AnythingLLM and continue
+    echo   2. Manually enter AnythingLLM installation path
+    echo   3. Re-download and install
+    echo.
+    set /p user_choice="Please enter option (1/2/3): "
+    
+    if "!user_choice!"=="1" (
+        echo.
+        echo [INFO] Please start AnythingLLM application manually
+        echo [INFO] After starting, return to this window
+        echo.
+        pause
+        goto :wait_anythingllm_ready
+    )
+    
+    if "!user_choice!"=="2" (
+        echo.
+        set /p custom_path="Enter the full path to AnythingLLM.exe or AnythingLLMDesktop.exe: "
+        if exist "!custom_path!" (
+            echo [SUCCESS] Found installation file: !custom_path!
+            echo [INFO] Starting AnythingLLM...
+            start /B "" "!custom_path!" >nul 2>&1
+            timeout /t 5 /nobreak >nul
+            goto :wait_anythingllm_ready
+        ) else (
+            echo [ERROR] File not found: !custom_path!
+            echo [INFO] Proceeding to download and install...
+            echo.
+            timeout /t 3 /nobreak >nul
+        )
+    )
+    
+    if "!user_choice!"=="3" (
+        echo [INFO] Will re-download and install AnythingLLM
+        echo.
+        timeout /t 2 /nobreak >nul
+        REM Continue with download process
+    ) else (
+        REM If option is invalid or not chosen, also continue with download
+        if "!user_choice!" neq "1" if "!user_choice!" neq "2" (
+            echo [WARNING] Invalid option, proceeding to download and install
+            echo.
+            timeout /t 2 /nobreak >nul
+        )
+    )
+) else (
+    echo [INFO] Will start downloading and installing AnythingLLM
+    echo.
+)
+
+REM AnythingLLM not installed or choose to reinstall, begin automatic installation
+echo ==========================================
+echo        AnythingLLM Windows Installer
+echo ==========================================
+echo.
+
+REM Detect system architecture
+set "ARCH=%PROCESSOR_ARCHITECTURE%"
+echo [INFO] Detected system architecture: %ARCH%
+echo.
+
+if /I "%ARCH%"=="ARM64" (
+    set "DOWNLOAD_URL=https://cdn.anythingllm.com/latest/AnythingLLMDesktop-Arm64.exe"
+    set "INSTALLER=AnythingLLMDesktop-Arm64.exe"
+) else (
+    set "DOWNLOAD_URL=https://cdn.anythingllm.com/latest/AnythingLLMDesktop.exe"
+    set "INSTALLER=AnythingLLMDesktop.exe"
+)
+
+REM Set download target to user's Downloads folder
+set "TARGET=%USERPROFILE%\Downloads\%INSTALLER%"
+
+echo [1/3] Downloading AnythingLLM...
+echo        Source: %DOWNLOAD_URL%
+echo        Destination: %TARGET%
+echo.
+
+REM Download file using PowerShell (set encoding to UTF-8)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; try { Start-BitsTransfer -Source '%DOWNLOAD_URL%' -Destination '%TARGET%' -ErrorAction Stop; exit 0 } catch { exit 1 }"
+
+if %errorlevel% neq 0 (
+    echo [WARNING] Primary download method failed, trying fallback method...
+    echo.
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Invoke-WebRequest -Uri '%DOWNLOAD_URL%' -OutFile '%TARGET%'"
+    
+    if !errorlevel! neq 0 (
+        echo [ERROR] Download failed!
+        echo.
+        echo Possible reasons:
+        echo 1. Network connection issue
+        echo 2. Firewall blocking
+        echo 3. PowerShell service not started
+        echo.
+        echo Please download AnythingLLM manually:
+        echo 1. Visit: https://anythingllm.com/download
+        echo 2. Download and install the Desktop version
+        echo 3. Rerun this script after installation
+        echo.
+        pause
+        exit /b 1
+    )
+)
+
+if exist "%TARGET%" (
+    echo [SUCCESS] Download successful: %TARGET%
+    echo.
+) else (
+    echo [ERROR] Download failed! File does not exist
+    echo Please download and install AnythingLLM manually, then rerun this script
+    echo Download URL: https://anythingllm.com/download
+    pause
+    exit /b 1
+)
+
+echo [2/3] Starting installer...
+echo.
+
+REM Launch installer (open File Explorer to let user see and double-click)
+start "" explorer "%TARGET%"
+
+echo [3/3] Installer launched, please click "Install" to complete installation.
+echo.
+echo [IMPORTANT]
+echo 1. During installation, select AnythingLLM NPU
+echo 2. Choose your preferred model version
+echo 3. After initial setup:
+echo    - Go to "Settings" - "System Admin" - "General"
+echo    - Enable "Enable network discovery"
+echo 4. Ensure AnythingLLM runs on localhost:3001
+echo    (This is the default port; note if different)
+echo.
+set /p "llm_ready=After completing AnythingLLM installation and confirming it is running, press Enter to continue (Y/n): "
+if "!llm_ready!"=="" set "llm_ready=y"
+set "llm_ready=!llm_ready: =!"
+if /i not "!llm_ready!"=="y" (
+    echo [INFO] Please complete AnythingLLM setup and rerun this script
     pause
     exit /b 0
 )
 
-REM Check if AnythingLLM is reachable
+:wait_anythingllm_ready
+REM Check if AnythingLLM is accessible
 echo [INFO] Checking AnythingLLM connectivity...
 curl -s http://localhost:3001 >nul 2>&1
 if %errorlevel% neq 0 (
@@ -239,16 +451,21 @@ if %errorlevel% neq 0 (
     echo 2. The service runs on localhost:3001 (default port)
     echo 3. The firewall is not blocking the connection
     echo.
-    set /p continue_anyway="Continue anyway? (y/n): "
-    if /i not "!continue_anyway!"=="Y" (
+    set /p "continue_anyway=Continue anyway? (Y/n): "
+    if "!continue_anyway!"=="" set "continue_anyway=y"
+    set "continue_anyway=!continue_anyway: =!"
+    if /i not "!continue_anyway!"=="y" (
         echo [INFO] Please check your AnythingLLM setup and rerun this script
         pause
         exit /b 0
     )
-) else (
-    echo [SUCCESS] AnythingLLM connectivity check passed
 )
 
+echo [SUCCESS] AnythingLLM connectivity check passed!
+echo.
+
+:anythingllm_installed
+:anythingllm_ready
 echo.
 
 REM =====================================
@@ -258,6 +475,50 @@ echo ==========================================
 echo Step 3/6: Get the AnythingLLM API key
 echo ==========================================
 echo.
+
+REM Check for existing API key
+set "existing_api_key="
+set "api_key_source="
+
+REM Method 1: Check .env file
+if exist ".env" (
+    echo [INFO] Found existing .env file
+    for /f "tokens=2 delims==" %%a in ('findstr /i "ANYTHINGLLM_API_KEY=" .env 2^>nul') do (
+        set "existing_api_key=%%a"
+        set "api_key_source=.env file"
+    )
+)
+
+REM Method 2: Check system environment variable (if not found in .env)
+if "!existing_api_key!"=="" (
+    if defined ANYTHINGLLM_API_KEY (
+        set "existing_api_key=%ANYTHINGLLM_API_KEY%"
+        set "api_key_source=system environment variable"
+    )
+)
+
+REM If existing API key found, ask if reuse
+if not "!existing_api_key!"=="" (
+    echo [INFO] Found existing API key (source: !api_key_source!)
+    echo.
+    echo Existing API key: !existing_api_key!
+    echo.
+    set /p "reuse_key=Use existing API key? (Y/n): "
+    if "!reuse_key!"=="" set "reuse_key=y"
+    REM Remove possible spaces
+    set "reuse_key=!reuse_key: =!"
+    if /i "!reuse_key!"=="y" (
+        set "api_key=!existing_api_key!"
+        echo [SUCCESS] Will use existing API key
+        echo.
+        goto :api_key_confirmed
+    )
+    if /i "!reuse_key!"=="n" (
+        echo [INFO] Will enter new API key
+        echo.
+    )
+)
+
 echo Now we need to obtain the AnythingLLM API key
 echo.
 echo [Important] Follow these steps to get your API key:
@@ -265,12 +526,12 @@ echo.
 echo 1. Open the AnythingLLM interface
 echo.
 echo 2. Navigate to the Settings page
-echo    Typically in the sidebar or the top-right menu
+echo    Typically in the sidebar or bottom-left settings menu
 echo.
-echo 3. Find the "API Keys" page
+echo 3. Click "Tools" - "Developer API" page
 echo.
 echo 4. Create a new API key
-echo    - Click "Create new API Key"
+echo    - Click "Create new API Key" or similar button
 echo    - Copy the generated API key
 echo.
 echo 5. The API key format typically looks like: XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX
@@ -289,19 +550,22 @@ if "!api_key!"=="" (
     goto :input_api_key
 )
 
-REM Simple validation of API key format
-echo !api_key! | findstr /r "^[A-Z0-9]\{3,\}-[A-Z0-9]\{3,\}-[A-Z0-9]\{3,\}-[A-Z0-9]\{3,\}$" >nul
+REM Simple validation of API key format (check for dash-separated format)
+echo !api_key! | findstr /r ".*-.*-.*-.*" >nul
 if %errorlevel% neq 0 (
     echo [WARNING] The API key format may be incorrect
-    echo Expected format: XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX
+    echo Expected format: XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX (with at least 3 dashes)
     echo Your input: !api_key!
     echo.
-    set /p confirm_key="Confirm using this key? (y/n): "
-    if /i not "!confirm_key!"=="Y" (
+    set /p "confirm_key=Confirm using this key? (Y/n): "
+    if "!confirm_key!"=="" set "confirm_key=y"
+    set "confirm_key=!confirm_key: =!"
+    if /i not "!confirm_key!"=="y" (
         goto :input_api_key
     )
 )
 
+:api_key_confirmed
 echo [SUCCESS] API key received: !api_key!
 echo.
 
@@ -464,8 +728,10 @@ echo - For technical support, see the project documentation
 echo.
 
 REM Provide a quick action
-set /p open_browser="Open the MBBuddy frontend now? (y/n): "
-if /i "!open_browser!"=="Y" (
+set /p "open_browser=Open the MBBuddy frontend now? (Y/n): "
+if "!open_browser!"=="" set "open_browser=y"
+set "open_browser=!open_browser: =!"
+if /i "!open_browser!"=="y" (
     start http://localhost
 )
 

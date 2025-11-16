@@ -60,8 +60,10 @@ if %errorlevel% equ 0 (
     echo [INFO] 發現正在運行的 MBBuddy 服務：
     docker ps --filter "name=mbbuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}" 2>nul
     echo.
-    set /p skip_setup="檢測到 MBBuddy 已在運行，是否跳過安裝直接顯示訪問資訊? (y/n): "
-    if /i "!skip_setup!"=="Y" (
+    set /p "skip_setup=檢測到 MBBuddy 已在運行，是否跳過安裝直接顯示訪問資訊? (Y/n): "
+    if "!skip_setup!"=="" set "skip_setup=y"
+    set "skip_setup=!skip_setup: =!"
+    if /i "!skip_setup!"=="y" (
         goto :show_access_info
     )
     echo [INFO] 將重新安裝和配置 MBBuddy...
@@ -115,8 +117,10 @@ echo 3. 完成 Docker Desktop 的初始設定
 echo 4. 確保 Docker Desktop 正在運行
 echo 5. 重新執行此腳本以繼續 MBBuddy 安裝
 echo.
-set /p restart_now="是否現在重新啟動電腦? (y/n): "
-if /i "!restart_now!"=="Y" (
+set /p "restart_now=是否現在重新啟動電腦? (Y/n): "
+if "!restart_now!"=="" set "restart_now=y"
+set "restart_now=!restart_now: =!"
+if /i "!restart_now!"=="y" (
     echo [INFO] 即將重新啟動電腦...
     shutdown /r /t 10 /c "重新啟動以完成 Docker 安裝"
     echo 10 秒後將重新啟動,按任意鍵取消...
@@ -183,8 +187,10 @@ echo 2. 重新啟動 Docker Desktop
 echo 3. 檢查 WSL2 是否正常運行 (wsl --status)
 echo 4. 重新啟動電腦
 echo.
-set /p continue_anyway="Docker 服務可能未完全就緒，是否仍要繼續? (y/n): "
-if /i "!continue_anyway!"=="Y" (
+set /p "continue_anyway=Docker 服務可能未完全就緒，是否仍要繼續? (Y/n): "
+if "!continue_anyway!"=="" set "continue_anyway=y"
+set "continue_anyway=!continue_anyway: =!"
+if /i "!continue_anyway!"=="y" (
     echo [WARNING] 繼續執行，但可能會遇到 Docker 相關錯誤
     goto :docker_ready
 )
@@ -287,8 +293,10 @@ echo        - %USERPROFILE%\AppData\Local\Programs\AnythingLLM\
 echo.
 
 REM 詢問用戶是否已安裝
-set /p already_installed="您是否已經安裝了 AnythingLLM? (y/n): "
-if /i "!already_installed!"=="Y" (
+set /p "already_installed=您是否已經安裝了 AnythingLLM? (Y/n): "
+if "!already_installed!"=="" set "already_installed=y"
+set "already_installed=!already_installed: =!"
+if /i "!already_installed!"=="y" (
     echo.
     echo [INFO] 請選擇以下選項：
     echo   1. 手動啟動 AnythingLLM 並繼續
@@ -422,8 +430,10 @@ echo    - 開啟「Enable network discovery」
 echo 4. 確保 AnythingLLM 在 localhost:3001 運行
 echo    (這是預設埠號，如果不同請記錄下來)
 echo.
-set /p llm_ready="完成 AnythingLLM 安裝並確認正在運行後，請輸入 y 繼續: "
-if /i not "!llm_ready!"=="Y" (
+set /p "llm_ready=完成 AnythingLLM 安裝並確認正在運行後，請按 Enter 繼續 (Y/n): "
+if "!llm_ready!"=="" set "llm_ready=y"
+set "llm_ready=!llm_ready: =!"
+if /i not "!llm_ready!"=="y" (
     echo [INFO] 請完成 AnythingLLM 設置後重新執行此腳本
     pause
     exit /b 0
@@ -441,8 +451,10 @@ if %errorlevel% neq 0 (
     echo 2. 服務運行在 localhost:3001 (預設埠號)
     echo 3. 防火牆未阻止連線
     echo.
-    set /p continue_anyway="是否仍要繼續? (y/n): "
-    if /i not "!continue_anyway!"=="Y" (
+    set /p "continue_anyway=是否仍要繼續? (Y/n): "
+    if "!continue_anyway!"=="" set "continue_anyway=y"
+    set "continue_anyway=!continue_anyway: =!"
+    if /i not "!continue_anyway!"=="y" (
         echo [INFO] 請檢查 AnythingLLM 設置後重新執行此腳本
         pause
         exit /b 0
@@ -491,7 +503,8 @@ if not "!existing_api_key!"=="" (
     echo.
     echo 現有的 API 金鑰: !existing_api_key!
     echo.
-    set /p "reuse_key=是否使用現有的 API 金鑰? (y/n): "
+    set /p "reuse_key=是否使用現有的 API 金鑰? (Y/n): "
+    if "!reuse_key!"=="" set "reuse_key=y"
     REM 移除可能的空格
     set "reuse_key=!reuse_key: =!"
     if /i "!reuse_key!"=="y" (
@@ -544,8 +557,10 @@ if %errorlevel% neq 0 (
     echo 預期格式: XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX (包含至少 3 個連字號)
     echo 您輸入的: !api_key!
     echo.
-    set /p confirm_key="是否確認使用此金鑰? (y/n): "
-    if /i not "!confirm_key!"=="Y" (
+    set /p "confirm_key=是否確認使用此金鑰? (Y/n): "
+    if "!confirm_key!"=="" set "confirm_key=y"
+    set "confirm_key=!confirm_key: =!"
+    if /i not "!confirm_key!"=="y" (
         goto :input_api_key
     )
 )
@@ -713,8 +728,10 @@ echo - 技術支援請查看專案文檔
 echo.
 
 REM 提供快捷操作
-set /p open_browser="是否現在打開 MBBuddy 前端? (y/n): "
-if /i "!open_browser!"=="Y" (
+set /p "open_browser=是否現在打開 MBBuddy 前端? (Y/n): "
+if "!open_browser!"=="" set "open_browser=y"
+set "open_browser=!open_browser: =!"
+if /i "!open_browser!"=="y" (
     start http://localhost
 )
 
