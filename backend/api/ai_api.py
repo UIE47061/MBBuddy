@@ -383,3 +383,86 @@ async def get_fusion_health():
         "health": health,
         "timestamp": time.time()
     }
+
+class CleanTempTopicsRequest(BaseModel):
+    """清理臨時主題的請求模型"""
+    room: str
+
+@router.post("/clean_temp_topics")
+async def clean_temp_topics(req: CleanTempTopicsRequest):
+    """
+    清理討論室中的臨時主題（如 "AI 主題生成中..." 等）
+
+    [POST] /ai/clean_temp_topics
+
+    參數：
+    - room (str): 討論室代碼
+
+    回傳：
+    - success (bool): 是否成功清理
+    - cleaned_topics (list[str]): 被清理的主題列表
+    - message (str): 操作結果訊息
+    """
+    # 檢查討論室是否存在
+    if req.room not in ROOMS:
+        raise HTTPException(status_code=404, detail="找不到指定的討論室")
+
+    # 定義需要清理的臨時主題關鍵字
+    temp_topic_keywords = [
+        "AI 主題生成中...",
+        "AI 主題生成中",
+        "AI 產生中...",
+        "AI 產生中",
+        "載入中...",
+        "載入中"
+    ]
+
+    cleaned_topics = []
+    
+    try:
+        # 獲取該討論室的所有主題
+        room_topics = [
+            topic_id for topic_id in topics.keys() 
+            if topic_id.startswith(f"{req.room}_")
+        ]
+        
+        # 檢查並清理臨時主題
+        for topic_id in room_topics:
+            topic_name = topic_id.replace(f"{req.room}_", "")
+            
+            # 檢查是否為臨時主題
+            if any(keyword in topic_name for keyword in temp_topic_keywords):
+                # 清理該主題的留言
+                if topic_id in topics:
+                    del topics[topic_id]
+                
+                # 清理該主題的投票記錄
+                votes_to_delete = [
+                    vote_id for vote_id in votes.keys()
+                    if vote_id.startswith(f"{topic_id}_")
+                ]
+                for vote_id in votes_to_delete:
+                    del votes[vote_id]
+                
+                cleaned_topics.append(topic_name)
+                print(f"✅ 已清理臨時主題: {topic_name}")
+        
+        if cleaned_topics:
+            return {
+                "success": True,
+                "cleaned_topics": cleaned_topics,
+                "message": f"成功清理 {len(cleaned_topics)} 個臨時主題"
+            }
+        else:
+            return {
+                "success": True,
+                "cleaned_topics": [],
+                "message": "沒有找到需要清理的臨時主題"
+            }
+    
+    except Exception as e:
+        print(f"❌ 清理臨時主題時發生錯誤: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"清理臨時主題失敗: {str(e)}"
+        )
