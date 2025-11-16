@@ -36,7 +36,6 @@ REM Switch to project root directory
 cd /d "%PROJECT_ROOT%"
 
 REM Verify correct project directory
-if not exist "package.json" goto :error_dir
 if not exist "backend" goto :error_dir
 if not exist "frontend" goto :error_dir
 if not exist "docker\docker-compose.yml" goto :error_dir
@@ -46,10 +45,20 @@ echo.
 
 REM Quick check for running MBBuddy services
 echo [INFO] Checking existing MBBuddy services...
-docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}" 2>nul | findstr "mbbuddy" >nul 2>&1
+
+REM First check if Docker is available
+docker --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [INFO] Docker not installed or not running, proceeding with full installation
+    echo.
+    goto :install_docker
+)
+
+REM Docker is available, check for running MBBuddy services
+docker ps --filter "name=mbbuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}" 2>nul | findstr "mbbuddy" >nul 2>&1
 if %errorlevel% equ 0 (
     echo [INFO] Found running MBBuddy services:
-    docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+    docker ps --filter "name=mbbuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}" 2>nul
     echo.
     set /p skip_setup="MBBuddy is already running. Skip installation and show access info? (y/n): "
     if /i "!skip_setup!"=="Y" (
@@ -59,7 +68,12 @@ if %errorlevel% equ 0 (
     echo [INFO] Stopping existing services...
     docker-compose -f docker\docker-compose.yml down >nul 2>&1
     echo.
+) else (
+    echo [INFO] No running MBBuddy services found
+    echo.
 )
+
+:install_docker
 
 REM =====================================
 REM Step 1: Install Docker Desktop
@@ -69,26 +83,51 @@ echo Step 1/6: Check and install Docker Desktop
 echo ==========================================
 echo.
 
+REM First check if Docker is already installed
 docker --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [INFO] Docker is not installed; starting automatic installation...
-    echo.
-    call "%SCRIPT_DIR%install_docker.bat"
-    if %errorlevel% neq 0 (
-        echo [ERROR] Docker installation failed
-        echo Please install Docker Desktop manually and rerun this script
-        echo Download: https://docs.docker.com/desktop/install/windows-install/
-        pause
-        exit /b 1
-    )
-    
-    echo [INFO] Docker installed. Please restart your computer and run this script again
-    pause
-    exit /b 0
-) else (
+if %errorlevel% equ 0 (
     echo [SUCCESS] Docker is installed
     docker --version
+    echo.
+    goto :docker_installed
 )
+
+REM Docker not installed, begin installation
+echo [INFO] Docker is not installed; starting automatic installation...
+echo.
+call "%SCRIPT_DIR%install_docker.bat"
+if %errorlevel% neq 0 (
+    echo [ERROR] Docker installation failed
+    echo Please install Docker Desktop manually and rerun this script
+    echo Download: https://docs.docker.com/desktop/install/windows-install/
+    pause
+    exit /b 1
+)
+
+echo.
+echo [SUCCESS] Docker installation completed!
+echo.
+echo [IMPORTANT]
+echo Docker Desktop has been installed, but you need to:
+echo 1. Restart your computer (recommended)
+echo 2. Or manually start Docker Desktop application
+echo 3. Complete Docker Desktop initial setup
+echo 4. Ensure Docker Desktop is running
+echo 5. Rerun this script to continue MBBuddy installation
+echo.
+set /p restart_now="Restart computer now? (y/n): "
+if /i "!restart_now!"=="Y" (
+    echo [INFO] Computer will restart in 10 seconds...
+    shutdown /r /t 10 /c "Restarting to complete Docker installation"
+    echo Press any key to cancel...
+    pause
+    shutdown /a
+)
+echo [INFO] Please restart and start Docker Desktop, then rerun this script
+pause
+exit /b 0
+
+:docker_installed
 
 REM Check whether Docker service is running
 echo [INFO] Checking Docker service status...
@@ -100,8 +139,8 @@ if %errorlevel% equ 0 (
     goto :docker_ready
 )
 
-REM If it fails, try a more detailed check
-docker version --format "{{.Server.Version}}" >nul 2>&1
+REM If that fails, try a more detailed check
+docker version --format "{{{{.Server.Version}}}}" >nul 2>&1
 if %errorlevel% equ 0 (
     echo [SUCCESS] Docker service is running
     goto :docker_ready
@@ -364,8 +403,8 @@ echo ==========================================
 echo.
 
 REM Check container status
-echo [Container status]
-docker ps --filter "name=MBBuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+echo [Container Status]
+docker ps --filter "name=MBBuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}" 2>nul
 if %errorlevel% neq 0 (
     echo Unable to check container status; please ensure Docker is running
 )

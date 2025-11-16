@@ -36,7 +36,6 @@ REM 切換到專案根目錄
 cd /d "%PROJECT_ROOT%"
 
 REM 檢查是否在正確的專案目錄
-if not exist "package.json" goto :error_dir
 if not exist "backend" goto :error_dir
 if not exist "frontend" goto :error_dir
 if not exist "docker\docker-compose.yml" goto :error_dir
@@ -46,10 +45,20 @@ echo.
 
 REM 快速檢查是否已有運行的 MBBuddy 服務
 echo [INFO] 檢查現有 MBBuddy 服務...
-docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}" 2>nul | findstr "mbbuddy" >nul 2>&1
+
+REM 先檢查 Docker 是否可用
+docker --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [INFO] Docker 未安裝或未運行，將進行完整安裝流程
+    echo.
+    goto :install_docker
+)
+
+REM Docker 可用，檢查是否有運行中的 MBBuddy 服務
+docker ps --filter "name=mbbuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}" 2>nul | findstr "mbbuddy" >nul 2>&1
 if %errorlevel% equ 0 (
     echo [INFO] 發現正在運行的 MBBuddy 服務：
-    docker ps --filter "name=mbbuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+    docker ps --filter "name=mbbuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}" 2>nul
     echo.
     set /p skip_setup="檢測到 MBBuddy 已在運行，是否跳過安裝直接顯示訪問資訊? (y/n): "
     if /i "!skip_setup!"=="Y" (
@@ -59,7 +68,12 @@ if %errorlevel% equ 0 (
     echo [INFO] 停止現有服務...
     docker-compose -f docker\docker-compose.yml down >nul 2>&1
     echo.
+) else (
+    echo [INFO] 未發現運行中的 MBBuddy 服務
+    echo.
 )
+
+:install_docker
 
 REM =====================================
 REM 步驟 1: 安裝 Docker Desktop
@@ -69,26 +83,51 @@ echo 步驟 1/6: 檢查並安裝 Docker Desktop
 echo ==========================================
 echo.
 
+REM 首先檢查 Docker 是否已安裝
 docker --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [INFO] Docker 未安裝，開始自動安裝...
-    echo.
-    call "%SCRIPT_DIR%install_docker.bat"
-    if %errorlevel% neq 0 (
-        echo [ERROR] Docker 安裝失敗
-        echo 請手動安裝 Docker Desktop 後重新執行此腳本
-        echo 下載地址: https://docs.docker.com/desktop/install/windows-install/
-        pause
-        exit /b 1
-    )
-    
-    echo [INFO] Docker 安裝完成，請重新啟動電腦後再次執行此腳本
-    pause
-    exit /b 0
-) else (
+if %errorlevel% equ 0 (
     echo [SUCCESS] Docker 已安裝
     docker --version
+    echo.
+    goto :docker_installed
 )
+
+REM Docker 未安裝,開始安裝流程
+echo [INFO] Docker 未安裝，開始自動安裝...
+echo.
+call "%SCRIPT_DIR%install_docker.bat"
+if %errorlevel% neq 0 (
+    echo [ERROR] Docker 安裝失敗
+    echo 請手動安裝 Docker Desktop 後重新執行此腳本
+    echo 下載地址: https://docs.docker.com/desktop/install/windows-install/
+    pause
+    exit /b 1
+)
+
+echo.
+echo [SUCCESS] Docker 安裝完成!
+echo.
+echo [重要提示]
+echo Docker Desktop 已安裝,但需要完成以下步驟:
+echo 1. 重新啟動電腦 (建議)
+echo 2. 或手動啟動 Docker Desktop 應用程式
+echo 3. 完成 Docker Desktop 的初始設定
+echo 4. 確保 Docker Desktop 正在運行
+echo 5. 重新執行此腳本以繼續 MBBuddy 安裝
+echo.
+set /p restart_now="是否現在重新啟動電腦? (y/n): "
+if /i "!restart_now!"=="Y" (
+    echo [INFO] 即將重新啟動電腦...
+    shutdown /r /t 10 /c "重新啟動以完成 Docker 安裝"
+    echo 10 秒後將重新啟動,按任意鍵取消...
+    pause
+    shutdown /a
+)
+echo [INFO] 請在重新啟動並啟動 Docker Desktop 後重新執行此腳本
+pause
+exit /b 0
+
+:docker_installed
 
 REM 檢查 Docker 服務是否正在執行
 echo [INFO] 檢查 Docker 服務狀態...
@@ -101,7 +140,7 @@ if %errorlevel% equ 0 (
 )
 
 REM 如果失敗，嘗試更詳細的檢測
-docker version --format "{{.Server.Version}}" >nul 2>&1
+docker version --format "{{{{.Server.Version}}}}" >nul 2>&1
 if %errorlevel% equ 0 (
     echo [SUCCESS] Docker 服務運行正常
     goto :docker_ready
@@ -365,7 +404,7 @@ echo.
 
 REM 檢查容器狀態
 echo [容器狀態]
-docker ps --filter "name=MBBuddy" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>nul
+docker ps --filter "name=MBBuddy" --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}" 2>nul
 if %errorlevel% neq 0 (
     echo 無法檢查容器狀態，請確認 Docker 服務正常運行
 )
