@@ -80,8 +80,7 @@ class TransparentFusionEngine:
     async def process_request(self, question: str, workspace_slug: Optional[str] = None, 
                             task_type: str = "general") -> str:
         """
-        透明處理請求：並行雙模型 -> NPU融合 -> 單一輸出
-        用戶感知不到任何變化，只是回答質量提升
+        統一使用 NPU 模型處理請求
         """
         self.stats['total_requests'] += 1
         
@@ -91,72 +90,25 @@ class TransparentFusionEngine:
         if cached_result:
             return cached_result
         
-        if not self.fusion_enabled:
-            # 融合被禁用，直接使用NPU模型
-            try:
-                result = await self.npu_client.call_chat_api(question, workspace_slug)
-                self._save_to_cache(cache_key, result)
-                return result
-            except Exception:
-                return "抱歉，AI服務暫時不可用。"
-        
         start_time = time.time()
         
         try:
-            # 1. 並行獲取兩個模型的回答
-            answer_a, answer_b, success_a, success_b, npu_time, cpu_time = await self._get_dual_answers_with_timing(
-                question, workspace_slug
-            )
+            # 使用 NPU 模型
+            result = await self.npu_client.call_chat_api(question, workspace_slug)
+            npu_time = time.time() - start_time
             
             # 更新性能統計
             self.stats['avg_npu_time'] = (self.stats['avg_npu_time'] + npu_time) / 2
-            self.stats['avg_cpu_time'] = (self.stats['avg_cpu_time'] + cpu_time) / 2
+            self.stats['npu_only'] += 1
             
-            # 2. 根據結果決定處理方式
-            if success_a and success_b:
-                # 雙模型都成功，進行NPU融合
-                self.stats['dual_success'] += 1
-                fusion_start = time.time()
-                final_answer = await self._perform_npu_fusion(
-                    question, answer_a, answer_b, workspace_slug, task_type
-                )
-                fusion_time = time.time() - fusion_start
-                self.stats['avg_fusion_time'] = (self.stats['avg_fusion_time'] + fusion_time) / 2
-                self.stats['fusion_success'] += 1
-                
-                # 緩存結果
-                self._save_to_cache(cache_key, final_answer)
-                return final_answer
-                
-            elif success_a:
-                # 只有NPU成功
-                self.stats['npu_only'] += 1
-                self._save_to_cache(cache_key, answer_a)
-                return answer_a
-                
-            elif success_b:
-                # 只有CPU成功
-                self.stats['cpu_only'] += 1  
-                self._save_to_cache(cache_key, answer_b)
-                return answer_b
-                
-            else:
-                # 都失敗了
-                self.stats['fallback_used'] += 1
-                fallback_result = "抱歉，AI服務暫時不可用，請稍後再試。"
-                return fallback_result
-                
+            # 緩存結果
+            self._save_to_cache(cache_key, result)
+            return result
+            
         except Exception as e:
-            print(f"透明融合錯誤: {e}")
+            print(f"NPU 模型錯誤: {e}")
             self.stats['fallback_used'] += 1
-            
-            # 最後的降級嘗試
-            try:
-                result = await self.npu_client.call_chat_api(question, workspace_slug)
-                self._save_to_cache(cache_key, result)
-                return result
-            except:
-                return "抱歉，AI服務暫時不可用，請稍後再試。"
+            return "抱歉，AI服務暫時不可用，請稍後再試。"
     
     async def _get_dual_answers_with_timing(self, question: str, 
                                           workspace_slug: Optional[str] = None) -> Tuple[str, str, bool, bool, float, float]:

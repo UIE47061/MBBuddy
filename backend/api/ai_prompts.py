@@ -216,6 +216,7 @@ class TopicParser:
     def parse_topics_from_response(raw_text: str, topic_count: int) -> List[str]:
         """
         從AI回覆中解析主題列表，增強過濾邏輯
+        支援陣列格式 ["主題1", "主題2"] 和物件格式 {"主題一": "...", "主題二": "..."}
         
         Args:
             raw_text: AI的原始回覆
@@ -226,6 +227,8 @@ class TopicParser:
         """
         import re
         import json
+        
+        print(f"原始回覆長度: {len(raw_text)}, 內容預覽: {raw_text[:200]}")
         
         # 預先清理：移除常見的無效內容
         cleaned_text = raw_text
@@ -250,30 +253,53 @@ class TopicParser:
         for pattern in invalid_patterns:
             cleaned_text = re.sub(pattern, '', cleaned_text, flags=re.MULTILINE | re.IGNORECASE)
         
+        generated_topics = []
+        
         try:
-            # 步驟 1: 找到最外層的 JSON 陣列
-            start_index = cleaned_text.find('[')
-            end_index = cleaned_text.rfind(']') + 1
+            # 步驟 1: 嘗試解析 JSON（陣列或物件）
+            # 先找陣列
+            array_start = cleaned_text.find('[')
+            array_end = cleaned_text.rfind(']') + 1
             
-            if start_index != -1 and end_index != 0:
-                json_str = cleaned_text[start_index:end_index]
-                initial_topics = json.loads(json_str)
+            # 再找物件
+            obj_start = cleaned_text.find('{')
+            obj_end = cleaned_text.rfind('}') + 1
+            
+            json_str = None
+            is_object = False
+            
+            # 判斷哪個 JSON 結構先出現
+            if array_start != -1 and (obj_start == -1 or array_start < obj_start):
+                json_str = cleaned_text[array_start:array_end]
+                is_object = False
+            elif obj_start != -1:
+                json_str = cleaned_text[obj_start:obj_end]
+                is_object = True
+            
+            if json_str:
+                parsed_data = json.loads(json_str)
                 
-                # 使用遞迴函式進行徹底的攤平與清理
-                generated_topics = TopicParser.flatten_and_clean_topics(initial_topics)
+                if is_object and isinstance(parsed_data, dict):
+                    # 物件格式：提取所有值
+                    print(f"✅ 解析到物件格式，鍵值對數量: {len(parsed_data)}")
+                    generated_topics = [str(value) for value in parsed_data.values() if value]
+                else:
+                    # 陣列格式：使用遞迴函式進行徹底的攤平與清理
+                    print(f"✅ 解析到陣列格式")
+                    generated_topics = TopicParser.flatten_and_clean_topics(parsed_data)
             else:
-                raise ValueError("找不到 JSON 陣列結構")
+                raise ValueError("找不到 JSON 結構")
 
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"⚠️ JSON 解析失敗: {e}，使用備用方案")
             # 備用方案：按行分割並清理
             lines = cleaned_text.split('\n')
-            generated_topics = []
             
             for line in lines:
                 line = line.strip().lstrip('-*').lstrip('123456789.').strip()
                 # 過濾掉空行和無效內容
                 if (line and 
-                    line not in ['[', ']', ','] and 
+                    line not in ['[', ']', ',', '{', '}'] and 
                     not line.lower().startswith(('json', '範例', '例如', '格式')) and
                     len(line) > 3):  # 主題至少要3個字符
                     generated_topics.append(line)
@@ -282,21 +308,24 @@ class TopicParser:
         final_topics = []
         for topic in generated_topics:
             if isinstance(topic, str):
-                topic = topic.strip(' "\'')  # 移除多餘的引號和空格
+                topic = topic.strip(' "\',:')  # 移除多餘的引號、空格、逗號、冒號
                 # 過濾掉明顯的無效主題
                 invalid_topics = [
                     'json', '範例', '例如', '格式', 'example',
-                    '請回答', '主題', '討論', '討論', '生成',
-                    '主題一', '主題二', '主題三', '主題1', '主題2', '主題3'
+                    '請回答', '主題', '討論', '生成'
                 ]
+                
+                # 移除 "主題一"、"主題二" 這類前綴
+                topic = re.sub(r'^(主題|议题|議題)[一二三四五六七八九十\d]+[:：]?\s*', '', topic)
                 
                 if (len(topic) >= 4 and 
                     topic.lower() not in invalid_topics and
-                    not topic.startswith('[') and 
-                    not topic.endswith(']') and
-                    not any(invalid in topic for invalid in ['請回答', '主題一', '主題二', '主題三'])):
+                    not topic.startswith(('[', '{')) and 
+                    not topic.endswith((']', '}')) and
+                    not any(invalid in topic.lower() for invalid in ['請回答', '格式'])):
                     final_topics.append(topic)
         
+        print(f"✅ 最終解析出 {len(final_topics)} 個主題: {final_topics}")
         return final_topics[:topic_count]
 
 # 全局實例
