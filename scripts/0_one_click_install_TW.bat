@@ -463,6 +463,49 @@ echo ==========================================
 echo 步驟 3/6: 獲取 AnythingLLM API 金鑰
 echo ==========================================
 echo.
+
+REM 檢查是否存在舊的 API 金鑰
+set "existing_api_key="
+set "api_key_source="
+
+REM 方法 1: 檢查 .env 檔案
+if exist ".env" (
+    echo [INFO] 發現現有的 .env 檔案
+    for /f "tokens=2 delims==" %%a in ('findstr /i "ANYTHINGLLM_API_KEY=" .env 2^>nul') do (
+        set "existing_api_key=%%a"
+        set "api_key_source=.env 檔案"
+    )
+)
+
+REM 方法 2: 檢查系統環境變數 (如果 .env 中沒找到)
+if "!existing_api_key!"=="" (
+    if defined ANYTHINGLLM_API_KEY (
+        set "existing_api_key=%ANYTHINGLLM_API_KEY%"
+        set "api_key_source=系統環境變數"
+    )
+)
+
+REM 如果找到現有的 API 金鑰,詢問是否重複使用
+if not "!existing_api_key!"=="" (
+    echo [INFO] 找到現有的 API 金鑰 (來源: !api_key_source!)
+    echo.
+    echo 現有的 API 金鑰: !existing_api_key!
+    echo.
+    set /p "reuse_key=是否使用現有的 API 金鑰? (y/n): "
+    REM 移除可能的空格
+    set "reuse_key=!reuse_key: =!"
+    if /i "!reuse_key!"=="y" (
+        set "api_key=!existing_api_key!"
+        echo [SUCCESS] 將使用現有的 API 金鑰
+        echo.
+        goto :api_key_confirmed
+    )
+    if /i "!reuse_key!"=="n" (
+        echo [INFO] 將重新輸入新的 API 金鑰
+        echo.
+    )
+)
+
 echo 現在需要獲取 AnythingLLM 的 API 金鑰
 echo.
 echo [重要] 請按照以下步驟獲取 API 金鑰：
@@ -507,6 +550,7 @@ if %errorlevel% neq 0 (
     )
 )
 
+:api_key_confirmed
 echo [SUCCESS] API 金鑰已接收: !api_key!
 echo.
 
